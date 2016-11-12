@@ -1,5 +1,5 @@
 """
-Convert MdC translitterated text to unicode
+Convert MdC transliterated text to unicode
 
 Convertir texte translittéré en MdC à l'unicode.
 
