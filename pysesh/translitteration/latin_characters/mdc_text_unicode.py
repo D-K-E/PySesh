@@ -36,7 +36,7 @@ def mdc_unicode(string, q_kopf=True):
     est False, on replace 'q' avec
     'ḳ'
 
-    The translitterated text passes to the
+    The transliterated text passes to the
     function under the variable 'string'.
     The search and replace operation
     is done for the related caracters. If
