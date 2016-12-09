@@ -24,7 +24,7 @@ Import the function:
 
 .. code-block:: python
 
-    In [1]: from pysesh.transliteration.transliterate_mdc import mdc_unicode
+    In [1]: from pysesh.transliteration.mdc_text_unicode import mdc_unicode
 
 Take a MdC encoded string (P.Berlin 3022:28-31):
 
