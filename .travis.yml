@@ -11,4 +11,4 @@ before_script:
   - pip install codecov
   - pip install coveralls
   
-script: nosetests --no-skip --with-coverage --cover-package=pysesh
+script: nosetests --no-skip --with-coverage
