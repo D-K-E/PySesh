@@ -12,7 +12,7 @@ __license__ = "GPL-3.0 License. See LICENSE"
 
 # Paketler / Les Paquets / Packages -----------------------------------
 
-from Pysesh.pysesh.transliteration.latin_characters.mdc_text_unicode import mdc_unicode
+from pysesh.transliteration.mdc_text_unicode import mdc_unicode
 
 import unittest
 
