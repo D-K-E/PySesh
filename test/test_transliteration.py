@@ -19,12 +19,12 @@ import unittest
 # -------------------------------------------------------
 
 class TestSequenceFunctions(unittest.TestCase):  # pylint: disable=R0904
-"""
-Class for unittest module
-Class pour unittest module
-Unittest kitaplığı için class
+  """
+  Class for unittest module
+  Class pour unittest module
+  Unittest kitaplığı için class
 
-"""
+  """
   def test_latin_transliteration_mdc_unicode_q_kopf_True(self):
       """
       test to transliterate mdc to unicode
