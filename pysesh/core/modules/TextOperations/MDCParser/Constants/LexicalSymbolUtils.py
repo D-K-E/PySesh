@@ -87,7 +87,7 @@ class LexicalSymbolUtils(object):
             result = "??"
         #
         return result
-    # TODO implement rest of lexicalSymbolsUtils.java
+    #
     def getOpenCodeForPhilology(self, code: int) -> "":
         """Get opening philological paranthesis with code point"""
         result = ""
