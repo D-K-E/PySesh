@@ -55,7 +55,7 @@ class LexicalSymbolUtils(object):
         #
         return None
     #
-    def getStringForPhilology(codepoint: int):
+    def getStringForPhilology(self, codepoint: int):
         """Get Philology code points"""
         if codepoint == SymbolCodes.BEGINERASE:
             result = self.codesToSymbols[SymbolCodes.BEGINERASE]
@@ -88,3 +88,49 @@ class LexicalSymbolUtils(object):
         #
         return result
     # TODO implement rest of lexicalSymbolsUtils.java
+    def getOpenCodeForPhilology(self, code: int) -> "":
+        """Get opening philological paranthesis with code point"""
+        result = ""
+		if code == SymbolCodes.ERASEDSIGNS:
+			result = self.codesToSymbols[SymbolCodes.BEGINERASE]
+		elif code == SymbolCodes.EDITORADDITION:
+			result = self.codesToSymbols[SymbolCodes.BEGINEDITORADDITION]
+		elif code == SymbolCodes.EDITORSUPERFLUOUS:
+			result = self.codesToSymbols[SymbolCodes.BEGINEDITORSUPERFLUOUS]
+			 # [{ }] => { }
+		elif code == SymbolCodes.PREVIOUSLYREADABLE:
+			result = self.codesToSymbols[SymbolCodes.BEGINPREVIOUSLYREADABLE]
+			 # [" "] => [| |]
+		elif code == SymbolCodes.SCRIBEADDITION:
+			result = self.codesToSymbols[SymbolCodes.BEGINSCRIBEADDITION]
+        #
+        return result
+    #
+    def getCloseCodeForPhilology(self, code: int) -> "":
+        """Get closing philological paranthesis with code point"""
+        result = ""
+        if code == SymbolCodes.ERASEDSIGNS:
+			result = self.codesToSymbols[SymbolCodes.ENDERASEDSIGNS]
+		elif code == SymbolCodes.EDITORADDITION:
+			result = self.codesToSymbols[SymbolCodes.ENDEDITORADDITION]
+		elif code == SymbolCodes.EDITORSUPERFLUOUS:
+			result = self.codesToSymbols[ENDEDITORSUPERFLUOUS]
+			 # [{ }] => { }
+		elif code == SymbolCodes.PREVIOUSLYREADABLE:
+			result = self.codesToSymbols[ENDPREVIOUSLYREADABLE]
+			 # [" "] => [| |]
+		elif code == SymbolCodes.SCRIBEADDITION:
+			result = self.codesToSymbols[ENDSCRIBEADDITION]
+			 # [' '] => ' '
+        #
+        return result
+    #
+    def getStringForLexicalItem(self, code: int) -> "":
+        """for simple lexical item, like space, halfspace, red
+	 * point, etc."""
+        return self.codesToSymbols[code]
+    #
+    def getCodeForString(self, mdcString: str) -> int:
+        """Return integer for mdc string, or none"""
+        return self.symbolsToCodes.get(mdcString, default=None)
+
