@@ -1,5 +1,5 @@
 # PySesh
-A Python NLP Complement to Jsesh
+A Python OCR Complement to Jsesh
 --------
 This project is a reimplementation of Michele Moglia's project on lunchpad, see: https://launchpad.net/pysesh
     
