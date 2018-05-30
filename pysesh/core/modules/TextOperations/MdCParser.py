@@ -198,6 +198,35 @@ class MdCHieroglyph(MdCCharacter):
         #
         return None
 
+class MdCModifier(MdCCharacter):
+    """Modifier char from MdC Grammar"""
+    def __init__(self):
+        """Constructor for TextSuper object"""
+        super().__init__(mdc_char="\\")# second \ is for escaping
+        #
+        return None
+    #
+    def setSpecificModifier(self, modifier_name: str):
+        """Set the modifier to a specific one like \red """
+        self.mdc_char = self.mdc_char + modifier_name
+        #
+        return None
+
+class MdCToggle(MdCCharacter):
+    """Modifier char from MdC Grammar"""
+    def __init__(self):
+        """Constructor for TextSuper object"""
+        super().__init__(mdc_char="+")
+        #
+        return None
+    #
+    def setSpecificToggle(self, toggle_name: str):
+        """Set the toggle to a specific one like +s"""
+        self.mdc_char = self.mdc_char + toggle_name
+        #
+        return None
+
+
 
 class MdCFile(object):
     """Contains the MdC file"""

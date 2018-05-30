@@ -38,9 +38,9 @@ CURRENT GRAMMAR :
 [8] textitem ::= lineEnd 
 [9] textitem ::= pageEnd 
 [10] textitem ::= textSuper 
-[11] lineEnd ::= LINEEND 
-[12] pageEnd ::= PAGEEND 
-[13] textSuper ::= TEXTSUPER 
+[11] lineEnd ::= LINEEND @DONE
+[12] pageEnd ::= PAGEEND @DONE
+[13] textSuper ::= TEXTSUPER @DONE
 [14] toggle ::= TOGGLE 
 [15] text ::= TEXT 
 [16] topcadrat ::= cadrat optShading 
@@ -58,7 +58,7 @@ CURRENT GRAMMAR :
 [28] maincadrats ::= maincadrat 
 [29] maincadrats ::= maincadrats optSeparator maincadrat 
 [30] optSeparator ::= 
-[31] optSeparator ::= SEPARATOR 
+[31] optSeparator ::= SEPARATOR @DONE
 [32] maincadrat ::= cadrat 
 [33] maincadrat ::= text 
 [34] maincadrat ::= toggle 
@@ -71,9 +71,9 @@ CURRENT GRAMMAR :
 [41] ligatures ::= ligatures AMP hieroglyph 
 [42] hieroglyph ::= optGrammar HIEROGLYPH modifiers optWordEnd 
 [43] optWordEnd ::= 
-[44] optWordEnd ::= WORDEND 
+[44] optWordEnd ::= WORDEND @DONE
 [45] optGrammar ::= 
-[46] optGrammar ::= GRAMMAR 
+[46] optGrammar ::= GRAMMAR @DONE
 [47] modifiers ::= 
 [48] modifiers ::= modifiers MODIFIER 
 [49] cartouche ::= BEGINCARTOUCHE cartoucheTexts ENDCARTOUCHE 
@@ -173,4 +173,9 @@ basicitem ::= topcadrat
 	| text 
 	| toggle 
 
+
+Interfaces
+============
+
+Interfaces taken from the jsesh library::
 
