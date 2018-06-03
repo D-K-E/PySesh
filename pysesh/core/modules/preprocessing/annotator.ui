@@ -160,7 +160,14 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="exportImageButton_push">
+             <widget class="QPushButton" name="resetSelectionButton">
+              <property name="text">
+               <string>Reset Selections</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="exportImageButton">
               <property name="text">
                <string>Export Selected Coordinates</string>
               </property>
