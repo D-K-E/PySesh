@@ -25,14 +25,18 @@ class RectViewer(QtWidgets.QGraphicsView):
 
     taken from SO: https://stackoverflow.com/a/47108486/7330813
     """
+    #
     rectStarted = QtCore.pyqtSignal(QtCore.QRectF)
     rectChanged = QtCore.pyqtSignal(QtCore.QRectF)
     rectEnded = QtCore.pyqtSignal(QtCore.QRectF)
+    drawrectSignal = QtCore.pyqtSignal(QtCore.QRectF)
+    #
     def __init__(self, *args, **kwargs):
         QtWidgets.QGraphicsView.__init__(self, *args, **kwargs)
         self.setMouseTracking(True)
         self.origin = QtCore.QPointF()
         self.changeRubberBand = False
+        self.drawrt = QtCore.QRectF()
 
     def mousePressEvent(self, event):
         self.origin = event.pos()
@@ -43,10 +47,10 @@ class RectViewer(QtWidgets.QGraphicsView):
 
     def mouseMoveEvent(self, event):
         if self.changeRubberBand:
-            rect = QtCore.QRectF(self.origin, event.pos())
-            self.rectChanged.emit(rect)
+            self.drawrt = QtCore.QRectF(self.origin, event.pos())
+            self.rectChanged.emit(self.drawrt)
         QtWidgets.QGraphicsView.mouseMoveEvent(self, event)
-
+    #
     def mouseReleaseEvent(self, event):
         self.changeRubberBand = False
         rect = QtCore.QRectF(self.origin, event.pos())
@@ -69,6 +73,7 @@ class PolygonViewer(QtWidgets.QGraphicsView):
         self.setSceneRect(QtCore.QRectF(self.viewport().rect()))
         self.changePoly = False
         self.polygon = QtGui.QPolygonF()
+        self.drawpt = QtCore.QPointF()
         #
     #
     def mousePressEvent(self, event):
@@ -87,8 +92,8 @@ class PolygonViewer(QtWidgets.QGraphicsView):
             #     QtCore.QLineF(self.origin, event.pos())
             # )
             event_position = event.pos()
-            point = QtCore.QPointF(self.mapToScene(event_position))
-            self.polyChanged.emit(point)
+            self.drawpt = QtCore.QPointF(self.mapToScene(event_position))
+            self.polyChanged.emit(self.drawpt)
         #
         QtWidgets.QGraphicsView.mouseMoveEvent(self, event)
     #
@@ -133,12 +138,13 @@ class Annotator_final(Annotator_init):
         #
         self.rect_viewer = RectViewer()
         self.rect_viewer.rectEnded.connect(self.addRectangleScene)
+        self.rect_viewer.rectChanged.connect(self.showRect)
         self.rectangle_list = []
         self.rectangle = QtWidgets.QGraphicsRectItem()
         #
         self.poly_viewer = PolygonViewer()
         self.poly_viewer.polyStarted.connect(self.initPolygon)
-        self.poly_viewer.polyChanged.connect(self.getPolyCoordinates)
+        self.poly_viewer.polyChanged.connect(self.showPolygon)
         self.poly_viewer.polyDone.connect(self.addPolygonScene)
         self.polygon_list = []
         self.point_list = []
@@ -304,14 +310,20 @@ class Annotator_final(Annotator_init):
     #
     # RectViewer
     #
-    def getRectCoordinates(self, r):
+    def showRect(self, rect: QtCore.QRectF):
+        "Show the rectangle on the scene"
         #
-        topLeft = r.topLeft()
-        bottomRight = r.bottomRight()
-        print(topLeft.x(), topLeft.y(), bottomRight.x(), bottomRight.y())
-        # TODO change this to be active if the radio button is selected
-        # and take the coordinates and added to the dictionary of the
-        # image in the image dict
+        topLeft = rect.topLeft()
+        topRight = rect.topRight()
+        bottomLeft = rect.bottomLeft()
+        topLine = QtCore.QLineF()
+        topLine.setPoints(topLeft, topRight)
+        topBottomLine= QtCore.QLineF()
+        topBottomLine.setPoints(topLeft, bottomLeft)
+        line1 = QtWidgets.QGraphicsLineItem(topLine)
+        line2 = QtWidgets.QGraphicsLineItem(topBottomLine)
+        self.graphicsScene.addItem(line1)
+        self.graphicsScene.addItem(line2)
     #
     def addRectangleScene(self, rect):
         "Add the final rectangle to the scene"
@@ -331,11 +343,16 @@ class Annotator_final(Annotator_init):
         self.polygon.prepend(point)
         self.point_list.append(point)
         #
-    def getPolyCoordinates(self, point: QtCore.QPointF()):
+    def showPolygon(self, point: QtCore.QPointF()):
         "Recieve polygon coordinates"
         self.polygon.append(point)
         self.point_list.append(point)
-        #
+        px = point.x()
+        py = point.y()
+        pointItem = QtWidgets.QGraphicsEllipseItem(
+            px, py, 1, 1)
+        self.graphicsScene.addItem(pointItem)
+    #
     def getPolygon(self):
         "Get polygon from the list of points"
         polygon = self.polygon
@@ -359,9 +376,6 @@ class Annotator_final(Annotator_init):
         self.polygon = QtGui.QPolygonF()
         self.polygon_list = []
         self.point_list = []
-
-
-
 
 
 if __name__ == '__main__':
