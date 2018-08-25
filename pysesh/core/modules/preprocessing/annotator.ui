@@ -137,24 +137,95 @@
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_2">
             <item>
+             <widget class="QGroupBox" name="SelectorColorWidget">
+              <property name="title">
+               <string>Selector Color</string>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_4">
+               <item>
+                <layout class="QVBoxLayout" name="ColorRedBoxLayout">
+                 <item>
+                  <widget class="QLabel" name="ColorRedLabel">
+                   <property name="text">
+                    <string>Red</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QSpinBox" name="ColorRedSBox">
+                   <property name="maximum">
+                    <number>255</number>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="ColorBlueLayout">
+                 <item>
+                  <widget class="QLabel" name="ColorBlueLabel">
+                   <property name="text">
+                    <string>Blue</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QSpinBox" name="ColorBlueSBox">
+                   <property name="maximum">
+                    <number>255</number>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="ColorGreenLayout">
+                 <item>
+                  <widget class="QLabel" name="ColorGreenLabel">
+                   <property name="text">
+                    <string>Green</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QSpinBox" name="ColorGreenSBox">
+                   <property name="maximum">
+                    <number>255</number>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
              <widget class="QGroupBox" name="selectorTypes">
               <property name="title">
                <string>Selector Type</string>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_3">
                <item>
-                <widget class="QRadioButton" name="boxSelectorRButton">
-                 <property name="text">
-                  <string>Box Selector</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QRadioButton" name="polygonSelectorRButton">
-                 <property name="text">
-                  <string>Polygon Selector</string>
-                 </property>
-                </widget>
+                <layout class="QVBoxLayout" name="verticalLayout">
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout">
+                   <item>
+                    <widget class="QRadioButton" name="polygonSelectorRButton">
+                     <property name="text">
+                      <string>Polygon Selector</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QRadioButton" name="boxSelectorRButton">
+                     <property name="text">
+                      <string>Box Selector</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
                </item>
               </layout>
              </widget>

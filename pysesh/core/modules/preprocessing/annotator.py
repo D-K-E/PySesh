@@ -320,8 +320,19 @@ class Annotator_final(Annotator_init):
         topLine.setPoints(topLeft, topRight)
         topBottomLine= QtCore.QLineF()
         topBottomLine.setPoints(topLeft, bottomLeft)
+        #
+        # Get color from spinboxes
+        #
+        green = self.ColorGreenSBox.value()
+        red = self.ColorRedSBox.value()
+        blue = self.ColorBlueSBox.value()
+        qcolor = QtGui.QColor(red,blue,green)
+        pen = QtGui.QPen()
+        pen.setColor(qcolor)
         line1 = QtWidgets.QGraphicsLineItem(topLine)
+        line1.setPen(pen)
         line2 = QtWidgets.QGraphicsLineItem(topBottomLine)
+        line2.setPen(pen)
         self.graphicsScene.addItem(line1)
         self.graphicsScene.addItem(line2)
     #
@@ -347,10 +358,21 @@ class Annotator_final(Annotator_init):
         "Recieve polygon coordinates"
         self.polygon.append(point)
         self.point_list.append(point)
+        #
+        # Get color from spinboxes
+        #
+        green = self.ColorGreenSBox.value()
+        red = self.ColorRedSBox.value()
+        blue = self.ColorBlueSBox.value()
+        qcolor = QtGui.QColor(red,blue,green)
+        pen = QtGui.QPen()
+        pen.setColor(qcolor)
+        #
         px = point.x()
         py = point.y()
         pointItem = QtWidgets.QGraphicsEllipseItem(
             px, py, 1, 1)
+        pointItem.setPen(pen)
         self.graphicsScene.addItem(pointItem)
     #
     def getPolygon(self):
@@ -367,7 +389,19 @@ class Annotator_final(Annotator_init):
         self.polygon.append(last_point)
         self.point_list.append(last_point)
         polygon = self.getPolygon()
-        self.graphicsScene.addPolygon(polygon)
+        #
+        # Get color from spinboxes
+        #
+        green = self.ColorGreenSBox.value()
+        red = self.ColorRedSBox.value()
+        blue = self.ColorBlueSBox.value()
+        qcolor = QtGui.QColor(red,blue,green)
+        pen = QtGui.QPen()
+        pen.setColor(qcolor)
+        scenepoly = QtWidgets.QGraphicsPolygonItem(polygon)
+        scenepoly.setPen(pen)
+        #
+        self.graphicsScene.addItem(scenepoly)
         self.polygon_list.append(polygon)
         self.polygon = QtGui.QPolygonF()
     #
