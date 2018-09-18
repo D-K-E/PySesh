@@ -1,0 +1,23 @@
+
+article#interface {
+    display: flex;
+}
+
+section#image-list {
+    width: 10%;
+}
+
+section#viewer {
+    width: 40%;
+    display: flex;
+}
+
+section#transcripter {
+    width: 40%;
+    display: flex;
+}
+
+h2.section-title{
+    width: 100%;
+}
+

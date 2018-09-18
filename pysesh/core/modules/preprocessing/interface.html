@@ -1,0 +1,158 @@
+<html>
+    <head>
+		    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <link rel="stylesheet" type="text/css" href="assets/css/style.css"/>
+    </head>
+    <body>
+	      <script src="assets/js/widgets.js"></script>
+        <header>
+            <h1>Interface</h1>
+        </header>
+        <article id="interface">
+            <section id="image-list">
+                <h2 id="image-list-title"
+                    class="section-title">Image List</h2>
+                    <input type="file" id="im-paths" accept="image/*" name="images[]" multiple />
+                    <output id="im-list"></output>
+
+                    <nav id="image-paths"
+                         onload="getImageLinks()">
+                    <button id="" onclick="getImageLinks()">
+                        Click
+                    </button>
+                    <button id="load-image-btn"
+                            onclick="loadImages()">
+                        Load Image
+                    </button>
+                </nav>
+            </section>
+            <section id="viewer">
+                <h2 id="viewer-title"
+                    class="section-title">Viewer</h2>
+                <div id="image-col">
+                    <svg id="scene"></svg>
+                </div>
+            </section>
+            <section id="transcripter">
+                <h2 id="transcripter-title"
+                    class="section-title">Transcripter</h2>
+                <div class="transcription-col">
+                    <div id="hide-tools">
+                        <fieldset id="toolbox-set">
+                            <legend>Tools</legend>
+                            <fieldset id="button-set">
+                                <button onclick="deleteBoxes()"
+                                        value="" id="deleteButton"
+                                        title="Delete Selections">
+                                    <img src="assets/icons/delete.svg" alt="Delete Button"/>
+                                </button>
+                                <button onclick="undoDeletion()" id="undodeleteButton"
+                                        title="Undo Delete">
+                                    <img src="assets/icons/undo.svg" alt="Undo Icon"/>
+                                    <img src="assets/icons/delete.svg" alt="Delete Icon"/>
+                                </button>
+                                <button onclick="addTranscription()"
+                                        id="addTranscriptionButton"
+                                        title="Add Selection">
+                                    <img src="assets/icons/addbox.svg" alt="Add Selection Button"/>
+                                </button>
+                                <button onclick="saveEverything()"
+                                        id="saveEverythingButton"
+                                        title="Save">
+                                    <img src="assets/icons/save.svg" alt="Save Button"/>
+                                </button>
+                                <!-- <button onclick="addLines()" id="addLineButton">
+                                     Add Lines
+                                     </button>
+                                -->
+                                <button id="uploadTranscriptionButton"
+                                        title="Upload Transcription File"
+                                        onclick="uploadTranscription()">
+                                    <img src="assets/icons/upload.svg"
+                                         alt="Upload Text Button"/>
+                                </button>
+                                <button id="markRTTranscriptionButton"
+                                        title="Mark Right to Left Text"
+                                        onclick="markRTLTranscription()">
+                                    Mark as Right To Left
+                                </button>
+                                <button id="markRTLTranscriptionButton"
+                                        title="Mark Right to Left Text"
+                                        onclick="markLTRTranscription()">
+                                    Mark as Left To Right
+                                </button>
+                            </fieldset>
+                            <fieldset id="box-set">
+                                <legend>Selected Region Type</legend>
+                                <label class="lbl-rbox-container">
+                                    Character
+                                    <input type="radio"
+                                           id="char-rbox"
+                                           value="character"
+                                           onclick="changeAddTTitle(event)"
+                                           name="selected-region-rbutton"/>
+                                </label>
+                                <label class="lbl-rbox-container">
+                                    Line
+                                    <input type="radio"
+                                           value="line"
+                                           onclick="changeAddTTitle(event)"
+                                           name="selected-region-rbutton""
+                                           id="line-rbox"/>
+                                </label>
+                                <label class="lbl-rbox-container">
+                                    Column
+                                    <input type="radio"
+                                           value="column"
+                                           onclick="changeAddTTitle(event)"
+                                           name="selected-region-rbutton""
+                                           id="column-rbox"/>
+                                </label>
+                                <label class="lbl-rbox-container">
+                                    Region
+                                    <input type="radio"
+                                           value="region"
+                                           onclick="changeAddTTitle(event)"
+                                           name="selected-region-rbutton""
+                                           id="region-rbox"/>
+                                </label>
+                            </fieldset> <!-- ends boxset -->
+                        </fieldset> <!-- ends toolbox -->
+                        <fieldset>
+                            <legend>Options</legend>
+                            <label class="lbl-showall">
+                                Show All Detected Lines
+                                <input type="checkbox"
+                                       id="showall-checkbox"
+                                       class="showall-checkbox"
+                                       onchange="drawAllDetections(event)"/>
+                            </label>
+                            <label class="lbl-selectall">
+                                Select/Deselect All Lines
+                                <input type="checkbox"
+                                       id="selectAllLines-checkbox"
+                                       onchange="selectAllLines()"
+                                       class="selectAllLines-checkbox"/>
+                            </label>
+                            <label class="lbl-showviewer">
+                                Activate Viewer
+                                <input type="checkbox"
+                                       id="activateViewer-checkbox"
+                                       onchange="activateViewer()"
+                                       class="viewer-checkbox"/>
+                            </label>
+                        </fieldset> <!-- Ends options -->
+                    </div>
+                    <label class="lbl-showtools">
+                        Show Toolbox
+                        <input type="checkbox"
+                               id="showtoolbox-checkbox"
+                               onchange="showToolBox(event)"
+                               class="showtoolbox-checkbox"/>
+                    </label>
+
+                </div> <!-- Ends transcription col -->
+            </section> <!-- Ends transcription section -->
+        </article>
+    </body>
+</html>
