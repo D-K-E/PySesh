@@ -12,43 +12,31 @@
             <section id="image-list">
                 <h2 id="image-list-title"
                     class="section-title">Image List</h2>
-                <nav id="image-paths"
-                     onload="getImageLinks()">
-                    <ol id="image-list">
-                        <li class="image-element">
-                            <a id="link-naufrage_img.png"
-                               class="image-link"
-                               onclick="loadImage2Viewer(event)">
-                                <img src="assets/images/naufrage_img.png"
+                    <nav id="image-paths"
+                         onload="getImageLinks()">
+                        <ol id="image-list">
+                        {% for impathName in impaths %}
+                            <li class="image-element">
+                                <a id="link-{{ impathName[1] }}"
+                                   class="image-link"
+                                   onclick="loadImage2Viewer(event)">
+                                <img src="{{ impathName[0] }}"
                                      draggable="false"
-                                     alt="image naufrage_img.png"
-                                     id="image-naufrage_img.png"
+                                     alt="image {{impathName[1] }}"
+                                     id="image-{{ impathName[1] }}"
                                      class="thumbnail-images"/>
-                                <p>naufrage_img.png</p>
-                            </a>
-                        </li>
-                        
-                        <li class="image-element">
-                            <a id="link-westcar_img.png"
-                               class="image-link"
-                               onclick="loadImage2Viewer(event)">
-                                <img src="assets/images/westcar_img.png"
-                                     alt="image westcar_img.png"
-                                     draggable="false"
-                                     id="image-westcar_img.png"
-                                     class="thumbnail-images"/>
-                                <p>westcar_img.png</p>
-                            </a>
-                        </li>
-                        
-                    </ol>
-                    <label id="thumbnail-lbl">
-                        Show thumbnails
+                                <p>{{ impathName[1] }}</p>
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ol>
+                        <label id="thumbnail-lbl">
+                            Show thumbnails
                         <input type="checkbox"
                                id="showthumbnail"
                                onchange="showThumbnails(event)"/>
-                    </label>
-                </nav>
+                        </label>
+                    </nav>
             </section>
             <section id="viewer">
                 <h2 id="viewer-title"
@@ -67,7 +55,7 @@
                         </label>
                         <button id="resetScene"
                                 class="reset-scene-btn"
-                                onclick="resetScene(event)">
+                                onclick="resetScene()">
                             Reset Scene
                         </button>
                         <fieldset id="selector-set">
@@ -78,7 +66,6 @@
                                 Polygon
                                 <input type="radio"
                                        value="polygon-selector"
-                                       name="selector-rbutton"
                                        onchange="setSelectorType()"
                                        id="poly-selector-rbutton"/>
                             </label>
@@ -87,7 +74,6 @@
                                 <input type="radio"
                                        value="rectangle-selector"
                                        onchange="setSelectorType()"
-                                       name="selector-rbutton"
                                        id="rect-selector-rbutton"/>
                             </label>
                             <fieldset id="selector-options">
@@ -110,7 +96,7 @@
                                 <label class="select-fill-color-lbl">
                                     Selector Fill Color
                                     <select id="selector-fill-color-list"
-                                            onchange="setSelectorFillColor(event)">
+                                    onchange="setSelectorFillColor(event)">
                                         <option value="none">None</option>
                                         <option value="red">Red</option>
                                         <option value="green">Green</option>
@@ -118,9 +104,7 @@
                                     </select>
                                 </label>
                             </fieldset>
-
                         </fieldset>
-
                         <fieldset id="box-set">
                             <legend>Selected Region Type</legend>
                             <label class="lbl-rbox-container">
@@ -159,10 +143,8 @@
                     </fieldset>
                     <svg id="scene"
                          xmlns="http://www.w3.org/2000/svg"
-                         onmousedown="setSceneMouseDown(evt)"
-                         onmousemove="setSceneMouseMove(evt)"
-                         draggable="false"
-                         onmouseup="setSceneMouseUp(evt)">
+                         onmouseup="setSceneMouseUp(event)"
+                         onmousedown="setSceneMouseDown(event)">
                         <defs>
                             <pattern id="image-pattern"
                                      patternUnits="userSpaceOnUse">

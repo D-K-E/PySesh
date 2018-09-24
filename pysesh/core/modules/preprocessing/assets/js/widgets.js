@@ -10,75 +10,215 @@
 //     return res === 1;
 // }
 
-// var CanvasRelated = function() {
-//     var obj = Object.create(CanvasRelated.prototype);
-//     obj.mousePress = false;
-//     obj.inhover = false;
-//     obj.selectInProcess = false;
-//     obj.outOfBounds = false;
-//     // image related
-//     obj.image = {};
-//     var pageImage;
-//     obj.image.pageImage = pageImage;
-//     obj.image.xcoord = 0;
-//     obj.image.ycoord = 0;
-//     var shiftx;
-//     var shifty;
-//     obj.image.shiftx = shiftx;
-//     obj.image.shifty = shifty;
-//     obj.image.hratio = 1;
-//     obj.image.vratio = 1;
-//     obj.image.ratio = 1;
-//     // current selection
-//     obj.image.currentRect = {
-//         "y1" : "",
-//         "x1" : "",
-//         "x2" : "",
-//         "y2" : "",
-//         "width" : "",
-//         "height" : "",
-//         "hratio": "",
-//         "vratio" : "",
-//         "x1_real" : "",
-//         "y1_real" : "",
-//         "x2_real" : "",
-//         "y2_real" : "",
-//         "width_real" : "",
-//         "height_real" : "",
-//     };
-//     // For storing hovering rectangle that represents the detected line
-//     obj.image.hoveringRect = {
-//         "y1" : "",
-//         "x1" : "",
-//         "x2" : "",
-//         "y2" : "",
-//         "width" : "",
-//         "height" : "",
-//         "hratio": "",
-//         "vratio" : "",
-//         "y1_real" : "",
-//         "x1_real" : "",
-//         "y2_real" : "",
-//         "x2_real" : "",
-//         "width_real" : "",
-//         "height_real" : ""
-//     };
-//     // Store lines detected in the image
-//     obj.image.lines = [];
-//     //
-//     return obj;
-// };
-// // Canvas Related methods
-// // methods
-// CanvasRelated.prototype.imageLoad = function(){
-//     /*
-//       Load the page image to the canvas
-//       with proper scaling and store
-//       the scaling ratios for drawing rectangles afterwards
+var ViewerRelated = function(){
+    var obj = Object.create(ViewerRelated.prototype);
+    obj.mousePress = false;
+    obj.imfiles = [];
+    obj.inhover = false;
+    obj.selectInProcess = false;
+    obj.mousePressed = false;
+    obj.outOfBounds = false;
+    obj.detections = {};
+    obj.selectorOptions = {};
+    obj.selectorOptions.type = "";
+    obj.selectorOptions.stroke = "";
+    obj.selectorOptions.fill = "";
+    obj.poly = {"pointlist" : [
+        // {x:0, y:1};
+    ],
+                "id" : ""};
+    obj.rect = {"x1" : "",
+                "y1" : "",
+                "id" : ""};
+    obj.hratio = 1;
+    obj.vratio = 1;
+    obj.ratio = 1;
+    return obj;
+};
+// Viewer Related methods
+// methods
+ViewerRelated.prototype.imageLoad = function(event){
+    /*
+      Load the page image to the viewer
+    */
+    this.imageRemove();
+    var scene = document.getElementById("scene");
+    var imagelink = event.target;
+    var imname = imagelink.getAttribute("id");
+    imname = imname.replace("link-","image-");
+    var imtag = document.getElementById(imname);
+    // remove existing image
+    // scene.remove; // todo
+    // Get parent width height
+    // var img = document.createElement("img");
+    // img.setAttribute("src", imagesrc);
+    var imwidth = imtag.naturalWidth;
+    var imheight = imtag.naturalHeight;
+    var imcol = document.getElementById("image-col");
+    // imcol.appendChild(img);
+    var parwidth = imcol.clientWidth;
+    var parheight = imcol.clientHeight;
+    scene.setAttribute("width", imwidth);
+    scene.setAttribute("height", imheight);
+    // var reader = new FileReader();
+    var image = document.getElementById("scene-image");
+    // image.setAttribute("href", img.url);
+    image.setAttribute("href", imtag.src);
+    image.setAttribute("width", imwidth - 2);
+    image.setAttribute("height", imheight - 2);
+    image.setAttribute("preserveAspectRatio", "meet");
+    var pattern = document.getElementById('image-pattern');
+    pattern.setAttribute("width", imwidth);
+    pattern.setAttribute("height", imheight);
+    return;
+};
+ViewerRelated.prototype.imageRemove = function(){
+    /*
+      Remove image from scene
+     */
+    var image = document.getElementById("scene-image");
+    image.setAttribute("href", "");
+    image.setAttribute("width", 0);
+    image.setAttribute("height", 0);
+    image.setAttribute("preserveAspectRatio", "meet");
+    var pattern = document.getElementById('image-pattern');
+    pattern.setAttribute("width", 0);
+    pattern.setAttribute("height", 0);
 
-//     */
-//     // Canvas load image
-//     var canvas = document.getElementById("image-canvas");
+};
+ViewerRelated.prototype.resetScene = function(){
+    /*
+      Reset scene with
+
+      Removes everything on the scene
+     */
+    this.imageRemove();
+};
+ViewerRelated.prototype.setStrokeFill = function(ele){
+    // set stroke and fill color to element
+    if(this.selectorOptions.stroke != ""){
+        ele.setAttribute("stroke", this.selectorOptions.stroke);
+    }else{
+        ele.setAttribute("stroke", "red");
+    }
+    if(this.selectorOptions.fill != ""){
+        ele.setAttribute("fill", this.selectorOptions.fill);
+    }
+    return ele;
+};
+ViewerRelated.prototype.setSelectionCoordinates = function(event){
+    // set selection coordinates based on the selector type
+    var scene = document.getElementById("scene");
+    var parentOffsetX = scene.offsetLeft;
+    var parentOffsetY = scene.offsetTop;
+    var xcoord = parseInt(event.layerX - parentOffsetX, 10);
+    var ycoord = parseInt(event.layerY - parentOffsetY, 10);
+    var seltype = this.selectorOptions.type;
+    if(seltype === "polygon-selector"){
+        this.poly.pointlist.push({"x" : xcoord,
+                                  "y" : ycoord});
+    }else if(seltype === "rectangle-selector"){
+        this.rect.x1 = xcoord;
+        this.rect.y1 = ycoord;
+    }
+};
+ViewerRelated.prototype.addSelectionCoordinates = function(event){
+    // add selection coordinates based on selector type
+    var scene = document.getElementById("scene");
+    var parentOffsetX = scene.offsetLeft;
+    var parentOffsetY = scene.offsetTop;
+    var xcoord = parseInt(event.layerX - parentOffsetX, 10);
+    var ycoord = parseInt(event.layerY - parentOffsetY, 10);
+    var seltype = this.selectorOptions.type;
+    if(seltype === "polygon-selector"){
+        this.poly.pointlist.push({"x" : xcoord,
+                                  "y" : ycoord});
+        var polyid = this.poly.id;
+        this.drawPolygon(polyid);
+    }else if(seltype === "rectangle-selector"){
+        var x1 = this.rect.x1;
+        var y1 = this.rect.y1;
+        var width = xcoord - x1;
+        var height = ycoord - y1;
+        var rectid = this.rect.id;
+        this.drawRect(x1,y1,width,
+                      height,rectid);
+    }
+    return;
+};
+ViewerRelated.prototype.getRectId = function(){
+    // Get id of the rectangle that will be drawn
+    var scene = document.getElementById("scene");
+    var rectlist = scene.getElementsByClassName("scene-rectangle");
+    var idstr = "scene-rect-";
+    idstr = idstr.concat(rectlist.length);
+    this.rect.id = idstr;
+    return;
+};
+ViewerRelated.prototype.drawRect = function(coordx,
+                                            coordy,
+                                            width,
+                                            height,
+                                            id){
+    /*
+      Draw a Rectangle over the scene
+     */
+    var scene = document.getElementById("scene");
+    var oldrect = document.getElementById(id);
+    if(oldrect != null){
+        scene.removeChild(oldrect);
+    }
+    var rectSelect = document.createElement("rect");
+    rectSelect.setAttribute("x", coordx);
+    rectSelect.setAttribute("y", coordy);
+    rectSelect.setAttribute("width", width);
+    rectSelect.setAttribute("height", height);
+    rectSelect.setAttribute("class", "scene-rectangle");
+    rectSelect.setAttribute("id", this.rect.id);
+    rectSelect = this.setStrokeFill(rectSelect);
+    scene.appendChild(rectSelect);
+    return;
+};
+ViewerRelated.prototype.getPolygonId = function(){
+    // Get id of the polygon that will be drawn
+    var scene = document.getElementById("scene");
+    var polygonlist = scene.getElementsByClassName("scene-polygon");
+    var idstr = "scene-poly-";
+    idstr = idstr.concat(polygonlist.length);
+    this.poly.id = idstr;
+    return;
+};
+ViewerRelated.prototype.drawPolygon = function(id){
+    /*
+      Draw polygon over the scene
+     */
+    var scene = document.getElementById("scene");
+    // remove previous polygon with same id
+    var oldpoly = document.getElementById(id);
+    if(oldpoly != null){
+        scene.removeChild(oldpoly);
+    }
+    //
+    var pointList = this.poly.pointlist;
+    var polygon = document.createElement("polygon");
+    var points = "";
+    for(var i=0; i<pointList.length; i++){
+        var point = pointList[i];
+        var x = point.x;
+        var y = point.y;
+        var pointstr = "".concat(x);
+        pointstr = pointstr.concat(",");
+        pointstr = pointstr.concat(y);
+        pointstr = pointstr.concat(" ");
+        points = points.concat(pointstr);
+    }
+    polygon.setAttribute("points", points);
+    polygon.setAttribute("id", this.poly.id);
+    polygon.setAttribute("class", "scene-polygon");
+    polygon = this.setStrokeFill(polygon);
+    scene.appendChild(polygon);
+    return;
+};
 //     var context = canvas.getContext('2d');
 //     // set canvas width and height
 //     var image = document.getElementById("image-page");
@@ -1213,7 +1353,10 @@
 // // Done Classes
 
 // // Instances
-// let canvasDraw = new CanvasRelated();
+
+let ImageViewer = new ViewerRelated();
+    // ImageViewer.getImageFiles(); // populating viewer with files
+    // let canvasDraw = new CanvasRelated();
 // canvasDraw.getLines(); // populating canvas with lines
 
 // let transcription = new TransColumn();
@@ -1244,26 +1387,83 @@
 
 // Interfacing with html
 
-function getImageLinks(){
-    // Get image links from data dir
-    // var crntdir = window.location.pathname;
-    var paths = document.getElementById("im-paths");
-    var fobjects = paths.files;
-    var imagelinks = [];
-    for(var i=0; i<fobjects.length; i++){
-        var file = fobjects[i];
-        var furl = window.URL.createObjectURL(file);
-        var impath = {};
-        impath.name = file.name;
-        impath.url = furl;
-        imagelinks.push(impath);
-    }
-    return imagelinks;
+function loadImage2Viewer(event){
+    // load image to viewer
+    ImageViewer.imageLoad(event);
+    return;
 }
 
-function loadImages(){
-    // Load image paths to navigation bar
+// Viewer Related
+
+function resetScene(){
+    // reset scene
+    ImageViewer.resetScene();
+    return;
 }
+
+function setSelectorType(event){
+    // set selector type to viewer
+    var rbuttons = document.querySelector("input[name='selector-rbutton']:checked");
+    var rbtnval = rbuttons.value;
+    ImageViewer.selectorOptions.type = rbtnval;
+    return;
+}
+
+function setSelectorStrokeColor(event){
+    // set selector stroke color to viewer
+    var selectedValue = document.getElementById("selector-stroke-color-list").value;
+    ImageViewer.selectorOptions.stroke = selectedValue;
+    return;
+}
+
+function setSelectorFillColor(event){
+    // set selector fill color to viewer
+    var selectedValue = document.getElementById("selector-fill-color-list").value;
+    ImageViewer.selectorOptions.fill = selectedValue;
+    return;
+}
+
+function setSceneMouseUp(event){
+    // set scene values for the mouse up event
+    ImageViewer.mousePressed = false;
+    return;
+}
+
+function setSceneMouseDown(event){
+    // set scene values for the mouse up event
+    var selectval = ImageViewer.selectInProcess;
+    if(selectval === true){
+        ImageViewer.mousePressed = true;
+        var selectorType = ImageViewer.selectorOptions.type;
+        if(selectorType === ""){
+            alert("Please select a selector type");
+        }else if(selectorType === "rectangle-selector"){
+            ImageViewer.getRectId();
+        }else if(selectorType === "polygon-selector"){
+            ImageViewer.getPolygonId();
+        }
+        ImageViewer.setSelectionCoordinates(event);
+    }
+    return;
+}
+
+function setSceneMouseMove(event){
+    // set values related to mouse movement to scene
+    var selectval = ImageViewer.selectInProcess;
+    if(selectval === true){
+        //
+        ImageViewer.addSelectionCoordinates(event);
+    }
+    return;
+}
+
+function setSelectionProcess(event){
+    // set selection process to viewe
+    var selectval = document.getElementById("selector-active-cbox");
+    ImageViewer.selectInProcess=selectval.checked;
+    return selectval;
+}
+
 
 // function imageLoad(){
 //     // Load image to canvas
