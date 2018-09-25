@@ -37,30 +37,48 @@ var ViewerRelated = function(){
 };
 // Viewer Related methods
 // methods
+ViewerRelated.prototype.createImagePattern = function(event){
+    // Creates the image pattern that would be in the background
+    var defsel = document.createElement("defs");
+    var pattern = document.createElement("pattern");
+    pattern.setAttribute("id","image-pattern");
+    pattern.setAttribute("patternUnits", "userSpaceOnUse");
+    var image = document.createElement("image");
+    image.setAttribute("id", "scene-image");
+    image.setAttribute("draggable", "false");
+    defsel.appendChild(pattern);
+    pattern.appendChild(image);
+    return defsel;
+}
 ViewerRelated.prototype.imageLoad = function(event){
     /*
       Load the page image to the viewer
+
+      The logic is the following:
+      Remove already existing image with all of its elements
+      Load the image to the image scene which is defined as a pattern
+      Refer to the pattern in a rectangle to set it as a background
     */
+    // remove existing image with all of its elements
     this.imageRemove();
+    // get id from the image link
     var scene = document.getElementById("scene");
     var imagelink = event.target;
     var imname = imagelink.getAttribute("id");
     imname = imname.replace("link-","image-");
+    // get image with id
     var imtag = document.getElementById(imname);
-    // remove existing image
-    // scene.remove; // todo
-    // Get parent width height
-    // var img = document.createElement("img");
-    // img.setAttribute("src", imagesrc);
+    // set the image width and height to
+    // scene, image tag, and rect element
     var imwidth = imtag.naturalWidth;
     var imheight = imtag.naturalHeight;
     var imcol = document.getElementById("image-col");
-    // imcol.appendChild(img);
     var parwidth = imcol.clientWidth;
     var parheight = imcol.clientHeight;
     scene.setAttribute("width", imwidth);
     scene.setAttribute("height", imheight);
-    // var reader = new FileReader();
+    // var scenedef = this.createImagePattern();
+    // scene.prepend(scenedef);
     var image = document.getElementById("scene-image");
     // image.setAttribute("href", img.url);
     image.setAttribute("href", imtag.src);
@@ -70,6 +88,10 @@ ViewerRelated.prototype.imageLoad = function(event){
     var pattern = document.getElementById('image-pattern');
     pattern.setAttribute("width", imwidth);
     pattern.setAttribute("height", imheight);
+    var viewrect = document.getElementById("image-rectangle");
+    viewrect.setAttribute("width", imwidth);
+    viewrect.setAttribute("height", imheight);
+    viewrect.setAttribute("fill", "url(#image-pattern)");
     return;
 };
 ViewerRelated.prototype.imageRemove = function(){
@@ -84,15 +106,10 @@ ViewerRelated.prototype.imageRemove = function(){
     var pattern = document.getElementById('image-pattern');
     pattern.setAttribute("width", 0);
     pattern.setAttribute("height", 0);
-
-};
-ViewerRelated.prototype.resetScene = function(){
-    /*
-      Reset scene with
-
-      Removes everything on the scene
-     */
-    this.imageRemove();
+    var viewrect = document.getElementById("image-rectangle");
+    viewrect.setAttribute("width", 0);
+    viewrect.setAttribute("height", 0);
+    viewrect.setAttribute("fill", "");
 };
 ViewerRelated.prototype.setStrokeFill = function(ele){
     // set stroke and fill color to element
@@ -141,8 +158,8 @@ ViewerRelated.prototype.addSelectionCoordinates = function(event){
         var width = xcoord - x1;
         var height = ycoord - y1;
         var rectid = this.rect.id;
-        this.drawRect(x1,y1,width,
-                      height,rectid);
+        this.drawRect(x1, y1, width,
+                      height, rectid);
     }
     return;
 };
@@ -174,6 +191,7 @@ ViewerRelated.prototype.drawRect = function(coordx,
     rectSelect.setAttribute("width", width);
     rectSelect.setAttribute("height", height);
     rectSelect.setAttribute("class", "scene-rectangle");
+    rectSelect.setAttribute("data-type", "scene-element");
     rectSelect.setAttribute("id", this.rect.id);
     rectSelect = this.setStrokeFill(rectSelect);
     scene.appendChild(rectSelect);
@@ -215,6 +233,7 @@ ViewerRelated.prototype.drawPolygon = function(id){
     polygon.setAttribute("points", points);
     polygon.setAttribute("id", this.poly.id);
     polygon.setAttribute("class", "scene-polygon");
+    polygon.setAttribute("data-type", "scene-element");
     polygon = this.setStrokeFill(polygon);
     scene.appendChild(polygon);
     return;
