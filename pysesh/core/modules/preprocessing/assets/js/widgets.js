@@ -22,7 +22,8 @@ var ViewerRelated = function(){
     obj.selectorOptions = {};
     obj.selectorOptions.type = "";
     obj.selectorOptions.stroke = "";
-    obj.selectorOptions.fill = "";
+    obj.selectorOptions.fillColor = "";
+    obj.selectorOptions.fillOpacity = "";
     obj.poly = {"pointlist" : [
         // {x:0, y:1};
     ],
@@ -37,19 +38,6 @@ var ViewerRelated = function(){
 };
 // Viewer Related methods
 // methods
-ViewerRelated.prototype.createImagePattern = function(event){
-    // Creates the image pattern that would be in the background
-    var defsel = document.createElement("defs");
-    var pattern = document.createElement("pattern");
-    pattern.setAttribute("id","image-pattern");
-    pattern.setAttribute("patternUnits", "userSpaceOnUse");
-    var image = document.createElement("image");
-    image.setAttribute("id", "scene-image");
-    image.setAttribute("draggable", "false");
-    defsel.appendChild(pattern);
-    pattern.appendChild(image);
-    return defsel;
-}
 ViewerRelated.prototype.imageLoad = function(event){
     /*
       Load the page image to the viewer
@@ -85,13 +73,6 @@ ViewerRelated.prototype.imageLoad = function(event){
     image.setAttribute("width", imwidth - 2);
     image.setAttribute("height", imheight - 2);
     image.setAttribute("preserveAspectRatio", "meet");
-    var pattern = document.getElementById('image-pattern');
-    pattern.setAttribute("width", imwidth);
-    pattern.setAttribute("height", imheight);
-    var viewrect = document.getElementById("image-rectangle");
-    viewrect.setAttribute("width", imwidth);
-    viewrect.setAttribute("height", imheight);
-    viewrect.setAttribute("fill", "url(#image-pattern)");
     return;
 };
 ViewerRelated.prototype.imageRemove = function(){
@@ -103,25 +84,24 @@ ViewerRelated.prototype.imageRemove = function(){
     image.setAttribute("width", 0);
     image.setAttribute("height", 0);
     image.setAttribute("preserveAspectRatio", "meet");
-    var pattern = document.getElementById('image-pattern');
-    pattern.setAttribute("width", 0);
-    pattern.setAttribute("height", 0);
-    var viewrect = document.getElementById("image-rectangle");
-    viewrect.setAttribute("width", 0);
-    viewrect.setAttribute("height", 0);
-    viewrect.setAttribute("fill", "");
 };
-ViewerRelated.prototype.setStrokeFill = function(ele){
+ViewerRelated.prototype.setStrokeFillCommon = function(element){
     // set stroke and fill color to element
     if(this.selectorOptions.stroke != ""){
-        ele.setAttribute("stroke", this.selectorOptions.stroke);
+        element.setAttributeNS(null, "stroke", this.selectorOptions.stroke);
     }else{
-        ele.setAttribute("stroke", "red");
+        element.setAttributeNS(null, "stroke", "red");
     }
-    if(this.selectorOptions.fill != ""){
-        ele.setAttribute("fill", this.selectorOptions.fill);
+    if(this.selectorOptions.fillColor != ""){
+        element.setAttributeNS(null, "fill", this.selectorOptions.fillColor);
     }
-    return ele;
+    if(this.selectorOptions.fillOpacity != ""){
+        element.setAttributeNS(null, "fill-opacity", this.selectorOptions.fillOpacity);
+    }else{
+        element.setAttributeNS(null, "fill-opacity", 0);
+    }
+    element.setAttributeNS(null, "data-type", "scene-element");
+    return element;
 };
 ViewerRelated.prototype.setSelectionCoordinates = function(event){
     // set selection coordinates based on the selector type
@@ -147,10 +127,12 @@ ViewerRelated.prototype.addSelectionCoordinates = function(event){
     var xcoord = parseInt(event.layerX - parentOffsetX, 10);
     var ycoord = parseInt(event.layerY - parentOffsetY, 10);
     var seltype = this.selectorOptions.type;
+    console.log("in add selection");
     if(seltype === "polygon-selector"){
         this.poly.pointlist.push({"x" : xcoord,
                                   "y" : ycoord});
         var polyid = this.poly.id;
+        console.log("neither foo nor bar poly");
         this.drawPolygon(polyid);
     }else if(seltype === "rectangle-selector"){
         var x1 = this.rect.x1;
@@ -158,8 +140,10 @@ ViewerRelated.prototype.addSelectionCoordinates = function(event){
         var width = xcoord - x1;
         var height = ycoord - y1;
         var rectid = this.rect.id;
+        console.log("neither foo nor bar before");
         this.drawRect(x1, y1, width,
                       height, rectid);
+        console.log("neither foo nor bar after");
     }
     return;
 };
@@ -168,32 +152,31 @@ ViewerRelated.prototype.getRectId = function(){
     var scene = document.getElementById("scene");
     var rectlist = scene.getElementsByClassName("scene-rectangle");
     var idstr = "scene-rect-";
-    idstr = idstr.concat(rectlist.length);
+    idstr = idstr.concat(rectlist.length + 1);
     this.rect.id = idstr;
     return;
 };
 ViewerRelated.prototype.drawRect = function(coordx,
                                             coordy,
                                             width,
-                                            height,
-                                            id){
+                                            height){
     /*
       Draw a Rectangle over the scene
      */
     var scene = document.getElementById("scene");
-    var oldrect = document.getElementById(id);
+    var ns = scene.getAttribute("xmlns");
+    var oldrect = document.getElementById(this.rect.id);
     if(oldrect != null){
         scene.removeChild(oldrect);
     }
-    var rectSelect = document.createElement("rect");
-    rectSelect.setAttribute("x", coordx);
-    rectSelect.setAttribute("y", coordy);
-    rectSelect.setAttribute("width", width);
-    rectSelect.setAttribute("height", height);
-    rectSelect.setAttribute("class", "scene-rectangle");
-    rectSelect.setAttribute("data-type", "scene-element");
-    rectSelect.setAttribute("id", this.rect.id);
-    rectSelect = this.setStrokeFill(rectSelect);
+    var rectSelect = document.createElementNS(ns, "rect");
+    rectSelect.setAttributeNS(null, "x", coordx);
+    rectSelect.setAttributeNS(null, "y", coordy);
+    rectSelect.setAttributeNS(null, "width", width);
+    rectSelect.setAttributeNS(null, "height", height);
+    rectSelect.setAttributeNS(null, "class", "scene-rectangle");
+    rectSelect.setAttributeNS(null, "id", this.rect.id);
+    rectSelect = this.setStrokeFillCommon(rectSelect);
     scene.appendChild(rectSelect);
     return;
 };
@@ -202,23 +185,24 @@ ViewerRelated.prototype.getPolygonId = function(){
     var scene = document.getElementById("scene");
     var polygonlist = scene.getElementsByClassName("scene-polygon");
     var idstr = "scene-poly-";
-    idstr = idstr.concat(polygonlist.length);
+    idstr = idstr.concat(polygonlist.length+1);
     this.poly.id = idstr;
     return;
 };
-ViewerRelated.prototype.drawPolygon = function(id){
+ViewerRelated.prototype.drawPolygon = function(){
     /*
       Draw polygon over the scene
      */
     var scene = document.getElementById("scene");
+    var ns = scene.getAttribute("xmlns");
     // remove previous polygon with same id
-    var oldpoly = document.getElementById(id);
+    var oldpoly = document.getElementById(this.poly.id);
     if(oldpoly != null){
         scene.removeChild(oldpoly);
     }
     //
     var pointList = this.poly.pointlist;
-    var polygon = document.createElement("polygon");
+    var polygon = document.createElementNS(ns, "polygon");
     var points = "";
     for(var i=0; i<pointList.length; i++){
         var point = pointList[i];
@@ -230,11 +214,10 @@ ViewerRelated.prototype.drawPolygon = function(id){
         pointstr = pointstr.concat(" ");
         points = points.concat(pointstr);
     }
-    polygon.setAttribute("points", points);
-    polygon.setAttribute("id", this.poly.id);
-    polygon.setAttribute("class", "scene-polygon");
-    polygon.setAttribute("data-type", "scene-element");
-    polygon = this.setStrokeFill(polygon);
+    polygon.setAttributeNS(null, "points", points);
+    polygon.setAttributeNS(null, "id", this.poly.id);
+    polygon.setAttributeNS(null, "class", "scene-polygon");
+    polygon = this.setStrokeFillCommon(polygon);
     scene.appendChild(polygon);
     return;
 };
@@ -1438,7 +1421,14 @@ function setSelectorStrokeColor(event){
 function setSelectorFillColor(event){
     // set selector fill color to viewer
     var selectedValue = document.getElementById("selector-fill-color-list").value;
-    ImageViewer.selectorOptions.fill = selectedValue;
+    ImageViewer.selectorOptions.fillColor = selectedValue;
+    return;
+}
+
+function setSelectorFillOpacity(event){
+    // set selector fill opacity to viewer
+    var selectedValue = document.getElementById("selector-fill-opacity-list").value;
+    ImageViewer.selectorOptions.fillOpacity = selectedValue;
     return;
 }
 
@@ -1463,15 +1453,33 @@ function setSceneMouseDown(event){
         }
         ImageViewer.setSelectionCoordinates(event);
     }
+    // test code
     return;
+}
+function addRect(event){
+    // add rectangle to svg element
+    var scene = document.getElementById("scene");
+    var ns = scene.getAttribute("xmlns");
+    console.log(ns);
+    var rect = document.createElementNS(ns, "rect");
+    rect.setAttributeNS(null, "width", 200);
+    rect.setAttributeNS(null, "height", 200);
+    rect.setAttributeNS(null, "x", 50);
+    rect.setAttributeNS(null, "y", 100);
+    rect.setAttributeNS(null, "fill", "red");
+    rect.setAttributeNS(null, "stroke", "red");
+    scene.appendChild(rect);
+    console.log("foo");
 }
 
 function setSceneMouseMove(event){
     // set values related to mouse movement to scene
+    console.log("in scene mouse move");
     var selectval = ImageViewer.selectInProcess;
     if(selectval === true){
         //
         ImageViewer.addSelectionCoordinates(event);
+        ImageViewer.drawRect();
     }
     return;
 }
