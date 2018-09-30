@@ -30,6 +30,10 @@ var ViewerRelated = function(){
                 "id" : ""};
     obj.rect = {"x1" : "",
                 "y1" : "",
+                "x1_real" : "",
+                "y1_real" : "",
+                "width" : "",
+                "height" : "",
                 "id" : ""};
     obj.hratio = 1;
     obj.vratio = 1;
@@ -221,6 +225,177 @@ ViewerRelated.prototype.drawPolygon = function(){
     scene.appendChild(polygon);
     return;
 };
+ViewerRelated.prototype.getSvgObjects = function(){
+    // Get the objects in svg in order to draw as a list
+    var rectObjects = [];
+    var polygonObjects = [];
+    var imageObj;
+    var scene = document.getElementById("scene");
+    var sceneObjects = scene.children;
+    for(var i=0; i< sceneObjects.length; i++){
+        var sceneObj = sceneObjects[i];
+        if(sceneObj.tagName === "rect"){
+            rectObjects.push(sceneObj);
+        }else if(sceneObj.tagName === "polygon"){
+            polygonObjects.push(sceneObj);
+        }else if(sceneObj.tagName === "image"){
+            imageObj = sceneObj;
+            alert("Other objects besides rect and poly present on svg scene");
+        }
+    }
+    return rectObjects, polygonObjects, imageObj;
+};
+ViewerRelated.prototype.createDrawerCanvas = function(){
+    // create a canvas that has the same size as the canvas
+    var canvas = document.createElement("canvas");
+    var scene = document.getElementById("scene");
+    canvas.setAttribute("id", "drawer");
+    var swidth = scene.getAttribute("width");
+    var sheight = scene.getAttribute("height");
+    canvas.setAttribute("width", swidth);
+    canvas.setAttribute("height", sheight);
+    return canvas;
+};
+ViewerRelated.prototype.getScaleFactor = function(destWidth,
+                                                  destHeight,
+                                                  srcWidth,
+                                                  srcHeight) {
+    // Get scale factor for correctly drawing rectangle
+    var hratio = destWidth / srcWidth;
+    var vratio = destHeight / srcHeight;
+    var ratio = Math.min(hratio, vratio);
+    //
+    return [hratio, vratio, ratio];
+};
+ViewerRelated.prototype.drawImageCanvas = function(canvas,
+                                                   image,
+                                                   context){
+    // Draw image to canvas
+    var cwidth = canvas.width;
+    var cheight = canvas.height;
+    // Get natural width and height
+    var imnwidth = image.naturalWidth;
+    var imnheight = image.naturalHeight;
+    //
+    var ratiolist = this.getScaleFactor(cwidth, cheight,
+                                        imnwidth, imnheight);
+    var ratio = ratiolist[2];
+    this.hratio = ratiolist[0];
+    this.vratio = ratiolist[1];
+    var scaledWidth = ratio * imnwidth;
+    var scaledHeight = ratio * imnheight;
+    context.drawImage(image, // image to draw
+                      0,0, // source coordinates (on image coords)
+                      imnwidth, // source width
+                      imnheight, // source height
+                      0,0, // destination coordinates (on canvas coords)
+                      scaledWidth,
+                      scaledHeight
+                     );
+    return context;
+};
+ViewerRelated.prototype.setContextStyle = function(el, context){
+    // Set context style with the attributes of the element
+    var strokeEl = el.getAttributeNS(null, "stroke");
+    var fillEl = el.getAttributeNS(null, "fill");
+    var fillOpEl = el.getAttributeNS(null, "fill-opacity");
+    context.strokeStyle = strokeEl;
+    context.fillColor = fillEl;
+    context.globalAlpha = fillOpEl;
+    return context;
+};
+ViewerRelated.prototype.drawRectangle = function(context,
+                                                 xcoord, ycoord,
+                                                 width, height){
+    // draw rectangle to context
+    context.beginPath();
+    context.rect(xcoord,
+                 ycoord,
+                 width,
+                 height);
+    context.stroke();
+    context.fill();
+    context.closePath();
+
+};
+ViewerRelated.prototype.drawRectsCanvas = function(canvas, // canvas to draw
+                                                   rects, // rect list
+                                                   context // drawing context
+                                                  ){
+    // Draw rects to canvas context
+    var oldalpha = context.globalAlpha;
+    for(var i=0; i < rects.length; i++){
+        var rectObj = rects[i];
+        var xcoord = rectObj.getAttributeNS(null, "x");
+        var ycoord = rectObj.getAttributeNS(null, "y");
+        var width = rectObj.getAttributeNS(null, "width");
+        var height = rectObj.getAttributeNS(null, "height");
+        context = this.setContextStyle(rectObj, context);
+        this.drawRectangle(context, xcoord,
+                           ycoord, width,
+                           height);
+    }
+    context.globalAlpha = oldalpha;
+    return context;
+};
+ViewerRelated.prototype.parsePoints = function(polygon){
+    // Parses a polygon points
+    // returns a point array [[x,y], [x2,y2], ...]
+    var pointString = polygon.getAttributeNS(null, "points");
+    var pointsArray = pointString.split(" ");
+    var points = [];
+    for(var i=0; i<pointsArray.length; i++){
+        var point = {};
+        var pointStr = pointsArray[i];
+        var pointSplit = pointStr.split(",");
+        point["x"] = pointSplit[0];
+        point["y"] = pointSplit[1];
+        points.push(point);
+    }
+    return points;
+};
+ViewerRelated.prototype.drawPolygon = function(context, polygon){
+    // draw polygon to context
+    var points = this.parsePoints(polygon);
+    var firstPoint = points[0];
+    context.beginPath();
+    context.moveTo(firstPoint.x, firstPoint.y);
+    for(var p=0; points.length; p++){
+        var point = points[p];
+        context.lineTo(point.x, point.y);
+    }
+    context.lineTo(firstPoint.x, firstPoint.y);
+    context.closePath();
+    context = this.setContextStyle(poly, context);
+    context.stroke();
+    context.fill();
+    return context;
+};
+ViewerRelated.prototype.drawPolygonsCanvas = function(canvas, // canvas to draw
+                                                      polygons, // polygon list
+                                                      context // drawing context
+                                                     ){
+    // Draw polygons to canvas context
+    var oldalpha = context.globalAlpha;
+    for(var i=0; i<polygons.length; i++){
+        var poly = polygons[i];
+        context = this.drawPolygon(context, poly);
+        context.globalAlpha = oldalpha;
+    }
+    return context;
+};
+ViewerRelated.prototype.drawSvgObjects = function(canvas,
+                                                  rects,
+                                                  polygons,
+                                                  image){
+    // draw rectangles polygons and the image to canvas
+    var context = canvas.getContext("2d");
+    context = this.drawImageCanvas(canvas,image, context);
+    context = this.drawRectsCanvas(canvas, rects, context);
+    context = this.drawPolygonsCanvas(canvas, polygons, context);
+    return context;
+};
+
 //     var context = canvas.getContext('2d');
 //     // set canvas width and height
 //     var image = document.getElementById("image-page");
@@ -230,12 +405,6 @@ ViewerRelated.prototype.drawPolygon = function(){
 //     // set client width of the canvas to image
 //     canvas.width = imcwidth;
 //     canvas.height = imcheight;
-//     var cwidth = canvas.clientWidth;
-//     var cheight = canvas.clientHeight;
-//     // Get natural width and height
-//     var imnwidth = image.naturalWidth;
-//     var imnheight = image.naturalHeight;
-//     //
 //     this.getScaleFactor(cwidth, //dest width
 //                         cheight, // dest height
 //                         imnwidth, // src width
@@ -258,19 +427,7 @@ ViewerRelated.prototype.drawPolygon = function(){
 //     document.getElementById("image-page").remove();
 // };
 // //
-// CanvasRelated.prototype.getScaleFactor = function(destWidth,
-//                                                   destHeight,
-//                                                   srcWidth,
-//                                                   srcHeight) {
-//     // Get scale factor for correctly drawing rectangle
-//     var hratio = destWidth / srcWidth;
-//     this.image.hratio = hratio;
-//     var vratio = destHeight / srcHeight;
-//     this.image.vratio = vratio;
-//     this.image.ratio = Math.min(hratio, vratio);
-//     //
-//     return;
-// };
+
 // //
 // CanvasRelated.prototype.getLine = function(lineObj){
 //     // get line coordinates from line object
