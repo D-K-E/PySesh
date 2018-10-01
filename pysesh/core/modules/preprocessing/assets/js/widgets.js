@@ -24,6 +24,10 @@ var ViewerRelated = function(){
     obj.selectorOptions.stroke = "";
     obj.selectorOptions.fillColor = "";
     obj.selectorOptions.fillOpacity = "";
+    obj.drawnObjects = [
+        // {"type" : "rectangle", "id" : "someid", ...},
+        // {"type" : "polygon", ...}
+    ];
     obj.poly = {"pointlist" : [
         // {x:0, y:1};
     ],
@@ -89,24 +93,8 @@ ViewerRelated.prototype.imageRemove = function(){
     image.setAttribute("height", 0);
     image.setAttribute("preserveAspectRatio", "meet");
 };
-ViewerRelated.prototype.setStrokeFillCommon = function(element){
-    // set stroke and fill color to element
-    if(this.selectorOptions.stroke != ""){
-        element.setAttributeNS(null, "stroke", this.selectorOptions.stroke);
-    }else{
-        element.setAttributeNS(null, "stroke", "red");
-    }
-    if(this.selectorOptions.fillColor != ""){
-        element.setAttributeNS(null, "fill", this.selectorOptions.fillColor);
-    }
-    if(this.selectorOptions.fillOpacity != ""){
-        element.setAttributeNS(null, "fill-opacity", this.selectorOptions.fillOpacity);
-    }else{
-        element.setAttributeNS(null, "fill-opacity", 0);
-    }
-    element.setAttributeNS(null, "data-type", "scene-element");
-    return element;
-};
+// TODO set selector options to context method
+// TODO review the methods for only canvas approach
 ViewerRelated.prototype.setSelectionCoordinates = function(event){
     // set selection coordinates based on the selector type
     var scene = document.getElementById("scene");
@@ -149,80 +137,6 @@ ViewerRelated.prototype.addSelectionCoordinates = function(event){
                       height, rectid);
         console.log("neither foo nor bar after");
     }
-    return;
-};
-ViewerRelated.prototype.getRectId = function(){
-    // Get id of the rectangle that will be drawn
-    var scene = document.getElementById("scene");
-    var rectlist = scene.getElementsByClassName("scene-rectangle");
-    var idstr = "scene-rect-";
-    idstr = idstr.concat(rectlist.length + 1);
-    this.rect.id = idstr;
-    return;
-};
-ViewerRelated.prototype.drawRect = function(coordx,
-                                            coordy,
-                                            width,
-                                            height){
-    /*
-      Draw a Rectangle over the scene
-     */
-    var scene = document.getElementById("scene");
-    var ns = scene.getAttribute("xmlns");
-    var oldrect = document.getElementById(this.rect.id);
-    if(oldrect != null){
-        scene.removeChild(oldrect);
-    }
-    var rectSelect = document.createElementNS(ns, "rect");
-    rectSelect.setAttributeNS(null, "x", coordx);
-    rectSelect.setAttributeNS(null, "y", coordy);
-    rectSelect.setAttributeNS(null, "width", width);
-    rectSelect.setAttributeNS(null, "height", height);
-    rectSelect.setAttributeNS(null, "class", "scene-rectangle");
-    rectSelect.setAttributeNS(null, "id", this.rect.id);
-    rectSelect = this.setStrokeFillCommon(rectSelect);
-    scene.appendChild(rectSelect);
-    return;
-};
-ViewerRelated.prototype.getPolygonId = function(){
-    // Get id of the polygon that will be drawn
-    var scene = document.getElementById("scene");
-    var polygonlist = scene.getElementsByClassName("scene-polygon");
-    var idstr = "scene-poly-";
-    idstr = idstr.concat(polygonlist.length+1);
-    this.poly.id = idstr;
-    return;
-};
-ViewerRelated.prototype.drawPolygon = function(){
-    /*
-      Draw polygon over the scene
-     */
-    var scene = document.getElementById("scene");
-    var ns = scene.getAttribute("xmlns");
-    // remove previous polygon with same id
-    var oldpoly = document.getElementById(this.poly.id);
-    if(oldpoly != null){
-        scene.removeChild(oldpoly);
-    }
-    //
-    var pointList = this.poly.pointlist;
-    var polygon = document.createElementNS(ns, "polygon");
-    var points = "";
-    for(var i=0; i<pointList.length; i++){
-        var point = pointList[i];
-        var x = point.x;
-        var y = point.y;
-        var pointstr = "".concat(x);
-        pointstr = pointstr.concat(",");
-        pointstr = pointstr.concat(y);
-        pointstr = pointstr.concat(" ");
-        points = points.concat(pointstr);
-    }
-    polygon.setAttributeNS(null, "points", points);
-    polygon.setAttributeNS(null, "id", this.poly.id);
-    polygon.setAttributeNS(null, "class", "scene-polygon");
-    polygon = this.setStrokeFillCommon(polygon);
-    scene.appendChild(polygon);
     return;
 };
 ViewerRelated.prototype.getSvgObjects = function(){
@@ -316,7 +230,7 @@ ViewerRelated.prototype.drawRectangle = function(context,
     context.stroke();
     context.fill();
     context.closePath();
-
+    return context;
 };
 ViewerRelated.prototype.drawRectsCanvas = function(canvas, // canvas to draw
                                                    rects, // rect list
@@ -371,31 +285,6 @@ ViewerRelated.prototype.drawPolygon = function(context, polygon){
     context.fill();
     return context;
 };
-ViewerRelated.prototype.drawPolygonsCanvas = function(canvas, // canvas to draw
-                                                      polygons, // polygon list
-                                                      context // drawing context
-                                                     ){
-    // Draw polygons to canvas context
-    var oldalpha = context.globalAlpha;
-    for(var i=0; i<polygons.length; i++){
-        var poly = polygons[i];
-        context = this.drawPolygon(context, poly);
-        context.globalAlpha = oldalpha;
-    }
-    return context;
-};
-ViewerRelated.prototype.drawSvgObjects = function(canvas,
-                                                  rects,
-                                                  polygons,
-                                                  image){
-    // draw rectangles polygons and the image to canvas
-    var context = canvas.getContext("2d");
-    context = this.drawImageCanvas(canvas,image, context);
-    context = this.drawRectsCanvas(canvas, rects, context);
-    context = this.drawPolygonsCanvas(canvas, polygons, context);
-    return context;
-};
-
 //     var context = canvas.getContext('2d');
 //     // set canvas width and height
 //     var image = document.getElementById("image-page");
