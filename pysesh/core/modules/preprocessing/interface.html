@@ -43,11 +43,11 @@
                         </li>
                         
                     </ol>
-                    <label id="thumbnail-lbl">
-                        Show thumbnails
+                    <label id="original-size-lbl">
+                        Load Original Size
                         <input type="checkbox"
-                               id="showthumbnail"
-                               onchange="showThumbnails(event)"/>
+                               id="original-size-cbox"
+                               onchange="loadOriginalSize(event)"/>
                     </label>
                 </nav>
             </section>
@@ -71,26 +71,33 @@
                                 onclick="resetScene()">
                             Reset Scene
                         </button>
+                        <button id="addSelection"
+                                class="add-selection-btn"
+                                onclick="addSelection(event)">
+                            Add Selection(s)
+                        </button>
                         <fieldset id="selector-set">
-                            <legend>
-                                Available Selectors
-                            </legend>
-                            <label class="poly-selector-lbl">
-                                Polygon
-                                <input type="radio"
-                                       name="selector-rbutton"
-                                       value="polygon-selector"
-                                       onchange="setSelectorType()"
-                                       id="poly-selector-rbutton"/>
-                            </label>
-                            <label class="rect-selector-lbl">
-                                Rectangle
-                                <input type="radio"
-                                       value="rectangle-selector"
-                                       name="selector-rbutton"
-                                       onchange="setSelectorType()"
-                                       id="rect-selector-rbutton"/>
-                            </label>
+                            <fieldset id="selector-types">
+                                <legend>
+                                    Available Selectors
+                                </legend>
+                                <label class="poly-selector-lbl">
+                                    Polygon
+                                    <input type="radio"
+                                           value="polygon-selector"
+                                           name="selector-rbutton"
+                                           onchange="setSelectorType()"
+                                           id="poly-selector-rbutton"/>
+                                </label>
+                                <label class="rect-selector-lbl">
+                                    Rectangle
+                                    <input type="radio"
+                                           value="rectangle-selector"
+                                           name="selector-rbutton"
+                                           onchange="setSelectorType()"
+                                           id="rect-selector-rbutton"/>
+                                </label>
+                            </fieldset>
                             <fieldset id="selector-options">
                                 <legend>Selector Options</legend>
                                 <label>
@@ -98,6 +105,20 @@
                                     <input type="checkbox"
                                            onchange="setSelectionProcess(event)"
                                            id="selector-active-cbox"/>
+                                </label>
+                                <label class="lbl-holdselection">
+                                    Hold Selections
+                                    <input type="checkbox"
+                                           id="selector-hold-cbox"
+                                           onchange="holdSelection()"
+                                           class="viewer-checkbox"/>
+                                </label>
+                                <label class="lbl-holdselection">
+                                    Show All Selections
+                                    <input type="checkbox"
+                                           id="selector-showall-cbox"
+                                           onchange="showAllSelections()"
+                                           class="viewer-checkbox"/>
                                 </label>
                                 <label class="select-stroke-color-lbl">
                                     Selector Stroke Color
@@ -134,10 +155,10 @@
                                         <option value="0.9">0.9</option>
                                         <option value="1">1</option>
                                         </select>
-                                        </label>
+                                </label>
 
-                            </fieldset>
-                        </fieldset>
+                            </fieldset> <!-- ends selector options -->
+                        </fieldset> <!-- ends selector set -->
                         <fieldset id="box-set">
                             <legend>Selected Region Type</legend>
                             <label class="lbl-rbox-container">
@@ -173,15 +194,12 @@
                                        id="region-rbox"/>
                             </label>
                         </fieldset> <!-- ends boxset -->
-                    </fieldset>
-                    <svg id="scene"
-                         xmlns="http://www.w3.org/2000/svg"
-                         onmouseup="setSceneMouseUp(evt)"
-                         onmousemove="setSceneMouseMove(evt)"
-                         onmousedown="setSceneMouseDown(evt)">
-                        <image id="scene-image"
-                               draggable="false"></image>
-                    </svg>
+                    </fieldset> <!-- ends viewer tools set -->
+                    <canvas id="scene"
+                            onmouseup="setSceneMouseUp(event)"
+                            onmousemove="setSceneMouseMove(event)"
+                            onmousedown="setSceneMouseDown(event)">
+                    </canvas>
                 </div>
             </section>
             <section id="transcripter">
@@ -292,6 +310,7 @@
                                        onchange="activateViewer()"
                                        class="viewer-checkbox"/>
                             </label>
+                            
                         </fieldset> <!-- Ends options -->
                     </div>
                     <label class="lbl-showtools">

@@ -1,43 +1,60 @@
-
-// // CanvasRelated object regrouping
-// // methods related to drawing and keeping track of the
-// // objects on the canvas
-
-// // Utils funcs
-
-// function isOdd(nb){
-//     var res = nb % 2;
-//     return res === 1;
-// }
-
+// author: Kaan Eraslan
+// license: see LICENSE
 var ViewerRelated = function(){
     var obj = Object.create(ViewerRelated.prototype);
-    obj.mousePress = false;
     obj.imfiles = [];
+    obj.imageId = "";
+
+    // checks
     obj.inhover = false;
-    obj.selectInProcess = false;
-    obj.mousePressed = false;
+    obj.originalSize = false; // load the image in its original size
+    obj.selectInProcess = false; // selection is in process
+    obj.mousePressed = false; // mouse is pressed or not
+    obj.inMouseUp = false; // inside the mouse up event
     obj.outOfBounds = false;
     obj.detections = {};
+
+    // selector options
     obj.selectorOptions = {};
     obj.selectorOptions.type = "";
-    obj.selectorOptions.stroke = "";
+    obj.selectorOptions.strokeColor = "";
     obj.selectorOptions.fillColor = "";
     obj.selectorOptions.fillOpacity = "";
-    obj.drawnObjects = [
-        // {"type" : "rectangle", "id" : "someid", ...},
-        // {"type" : "polygon", ...}
-    ];
+
+    // Drawn object stacks
+    obj.drawnObject = {}; // stores last drawn object
+    obj.drawnObjects = {"type" : "FeatureCollection", "features" : []};
+    obj.heldObjects = []; // stores drawn objects and the last drawn object
+
+    // drawn object templates
     obj.poly = {"pointlist" : [
-        // {x:0, y:1};
+        // {x:0, y:1, x_real:20, y_real:50};
     ],
-                "id" : ""};
+                "id" : "",
+                "type" : "polygon",
+                "regionType" : "",
+                "hratio" : "",
+                "vratio" : "",
+                "fillColor" : "",
+                "strokeColor" : "",
+                "fillOpacity" : "",
+                "imageId" : ""};
     obj.rect = {"x1" : "",
+                "type" : "rectangle",
+                "regionType" : "",
                 "y1" : "",
                 "x1_real" : "",
                 "y1_real" : "",
                 "width" : "",
+                "width_real" : "",
                 "height" : "",
+                "height_real" : "",
+                "imageId" : "",
+                "hratio" : "",
+                "vratio" : "",
+                "fillColor" : "",
+                "strokeColor" : "",
+                "fillOpacity" : "",
                 "id" : ""};
     obj.hratio = 1;
     obj.vratio = 1;
@@ -46,6 +63,30 @@ var ViewerRelated = function(){
 };
 // Viewer Related methods
 // methods
+ViewerRelated.prototype.getScaleFactor = function(destWidth,
+                                                  destHeight,
+                                                  srcWidth,
+                                                  srcHeight) {
+    // Get scale factor for correctly drawing rectangle
+    var hratio = destWidth / srcWidth;
+    this.hratio = hratio;
+    var vratio = destHeight / srcHeight;
+    this.vratio = vratio;
+    var ratio = Math.min(hratio, vratio);
+    this.ratio = ratio;
+    //
+    return [hratio, vratio, ratio];
+};
+ViewerRelated.prototype.clearScene = function(){
+    /*
+      Remove image from scene
+    */
+    var scene = document.getElementById("scene");
+    var context = scene.getContext("2d");
+    context.clearRect(0,0, scene.width, scene.height);
+    return;
+};
+// general drawing methods
 ViewerRelated.prototype.imageLoad = function(event){
     /*
       Load the page image to the viewer
@@ -56,234 +97,499 @@ ViewerRelated.prototype.imageLoad = function(event){
       Refer to the pattern in a rectangle to set it as a background
     */
     // remove existing image with all of its elements
-    this.imageRemove();
+    this.clearScene();
+
     // get id from the image link
-    var scene = document.getElementById("scene");
     var imagelink = event.target;
     var imname = imagelink.getAttribute("id");
     imname = imname.replace("link-","image-");
-    // get image with id
+    this.imageId = imname;
+
+    // get img tag with id
     var imtag = document.getElementById(imname);
+
     // set the image width and height to
     // scene, image tag, and rect element
     var imwidth = imtag.naturalWidth;
     var imheight = imtag.naturalHeight;
-    var imcol = document.getElementById("image-col");
-    var parwidth = imcol.clientWidth;
-    var parheight = imcol.clientHeight;
-    scene.setAttribute("width", imwidth);
-    scene.setAttribute("height", imheight);
-    // var scenedef = this.createImagePattern();
-    // scene.prepend(scenedef);
-    var image = document.getElementById("scene-image");
-    // image.setAttribute("href", img.url);
-    image.setAttribute("href", imtag.src);
-    image.setAttribute("width", imwidth - 2);
-    image.setAttribute("height", imheight - 2);
-    image.setAttribute("preserveAspectRatio", "meet");
+
+    // get canvas and context
+    var scene = document.getElementById("scene");
+    var context = scene.getContext("2d");
+    if(this.originalSize === false){
+
+        // Set canvas width and height
+        var imcol = document.getElementById("image-col");
+        var parwidth = imcol.clientWidth;
+        var parheight = imcol.clientHeight;
+        scene.setAttribute("width", parwidth);
+        scene.setAttribute("height", parheight);
+
+        // get correct ratios for display
+        var ratiolist = this.getScaleFactor(parwidth,
+                                            parheight,
+                                            imwidth,
+                                            imheight);
+        var ratio = ratiolist[2];
+    }else{
+        scene.setAttribute("width", imwidth);
+        scene.setAttribute("height", imheight);
+        // get correct ratios for display
+        var ratiolist = this.getScaleFactor(imwidth,
+                                            imheight,
+                                            imwidth,
+                                            imheight);
+        var ratio = ratiolist[2];
+    }
+    var scaledWidth = ratio * imwidth;
+    var scaledHeight = ratio * imheight;
+    context.drawImage(imtag, // image
+                      0,0, // coordinate source
+                      imwidth, // source width
+                      imheight, // source height
+                      0,0, // coordinate destination
+                      scaledWidth, // destination width
+                      scaledHeight // destination height
+                     );
     return;
 };
-ViewerRelated.prototype.imageRemove = function(){
-    /*
-      Remove image from scene
-     */
-    var image = document.getElementById("scene-image");
-    image.setAttribute("href", "");
-    image.setAttribute("width", 0);
-    image.setAttribute("height", 0);
-    image.setAttribute("preserveAspectRatio", "meet");
-};
-// TODO set selector options to context method
-// TODO review the methods for only canvas approach
-ViewerRelated.prototype.setSelectionCoordinates = function(event){
-    // set selection coordinates based on the selector type
-    var scene = document.getElementById("scene");
-    var parentOffsetX = scene.offsetLeft;
-    var parentOffsetY = scene.offsetTop;
-    var xcoord = parseInt(event.layerX - parentOffsetX, 10);
-    var ycoord = parseInt(event.layerY - parentOffsetY, 10);
-    var seltype = this.selectorOptions.type;
-    if(seltype === "polygon-selector"){
-        this.poly.pointlist.push({"x" : xcoord,
-                                  "y" : ycoord});
-    }else if(seltype === "rectangle-selector"){
-        this.rect.x1 = xcoord;
-        this.rect.y1 = ycoord;
-    }
-};
-ViewerRelated.prototype.addSelectionCoordinates = function(event){
-    // add selection coordinates based on selector type
-    var scene = document.getElementById("scene");
-    var parentOffsetX = scene.offsetLeft;
-    var parentOffsetY = scene.offsetTop;
-    var xcoord = parseInt(event.layerX - parentOffsetX, 10);
-    var ycoord = parseInt(event.layerY - parentOffsetY, 10);
-    var seltype = this.selectorOptions.type;
-    console.log("in add selection");
-    if(seltype === "polygon-selector"){
-        this.poly.pointlist.push({"x" : xcoord,
-                                  "y" : ycoord});
-        var polyid = this.poly.id;
-        console.log("neither foo nor bar poly");
-        this.drawPolygon(polyid);
-    }else if(seltype === "rectangle-selector"){
-        var x1 = this.rect.x1;
-        var y1 = this.rect.y1;
-        var width = xcoord - x1;
-        var height = ycoord - y1;
-        var rectid = this.rect.id;
-        console.log("neither foo nor bar before");
-        this.drawRect(x1, y1, width,
-                      height, rectid);
-        console.log("neither foo nor bar after");
-    }
-    return;
-};
-ViewerRelated.prototype.getSvgObjects = function(){
-    // Get the objects in svg in order to draw as a list
-    var rectObjects = [];
-    var polygonObjects = [];
-    var imageObj;
-    var scene = document.getElementById("scene");
-    var sceneObjects = scene.children;
-    for(var i=0; i< sceneObjects.length; i++){
-        var sceneObj = sceneObjects[i];
-        if(sceneObj.tagName === "rect"){
-            rectObjects.push(sceneObj);
-        }else if(sceneObj.tagName === "polygon"){
-            polygonObjects.push(sceneObj);
-        }else if(sceneObj.tagName === "image"){
-            imageObj = sceneObj;
-            alert("Other objects besides rect and poly present on svg scene");
+ViewerRelated.prototype.setRectId = function(){
+    // Sets the id field for the current rectangle
+    var rectlist = [];
+    for(var i=0; i<this.drawnObjects.length; i++){
+        //
+        var drawObj = this.drawnObjects[i];
+        if(drawObj.type === "rectangle"){
+            rectlist.push(drawObj);
         }
     }
-    return rectObjects, polygonObjects, imageObj;
+    var rectid = rectlist.length;
+    rectid = "rect-".concat(rectid);
+    this.rect.id = rectid;
+    return;
 };
-ViewerRelated.prototype.createDrawerCanvas = function(){
-    // create a canvas that has the same size as the canvas
-    var canvas = document.createElement("canvas");
-    var scene = document.getElementById("scene");
-    canvas.setAttribute("id", "drawer");
-    var swidth = scene.getAttribute("width");
-    var sheight = scene.getAttribute("height");
-    canvas.setAttribute("width", swidth);
-    canvas.setAttribute("height", sheight);
-    return canvas;
+ViewerRelated.prototype.setPolyId = function(){
+    // Sets the id field for the current rectangle
+    var polylist = [];
+    for(var i=0; i<this.drawnObjects.length; i++){
+        //
+        var drawObj = this.drawnObjects[i];
+        if(drawObj.type === "polygon"){
+            polylist.push(drawObj);
+        }
+    }
+    var polyid = polylist.length;
+    polyid = "poly-".concat(polyid);
+    this.poly.id = polyid;
+    return;
 };
-ViewerRelated.prototype.getScaleFactor = function(destWidth,
-                                                  destHeight,
-                                                  srcWidth,
-                                                  srcHeight) {
-    // Get scale factor for correctly drawing rectangle
-    var hratio = destWidth / srcWidth;
-    var vratio = destHeight / srcHeight;
-    var ratio = Math.min(hratio, vratio);
-    //
-    return [hratio, vratio, ratio];
-};
-ViewerRelated.prototype.drawImageCanvas = function(canvas,
-                                                   image,
-                                                   context){
-    // Draw image to canvas
-    var cwidth = canvas.width;
-    var cheight = canvas.height;
-    // Get natural width and height
-    var imnwidth = image.naturalWidth;
-    var imnheight = image.naturalHeight;
-    //
-    var ratiolist = this.getScaleFactor(cwidth, cheight,
-                                        imnwidth, imnheight);
-    var ratio = ratiolist[2];
-    this.hratio = ratiolist[0];
-    this.vratio = ratiolist[1];
-    var scaledWidth = ratio * imnwidth;
-    var scaledHeight = ratio * imnheight;
-    context.drawImage(image, // image to draw
-                      0,0, // source coordinates (on image coords)
-                      imnwidth, // source width
-                      imnheight, // source height
-                      0,0, // destination coordinates (on canvas coords)
-                      scaledWidth,
-                      scaledHeight
-                     );
-    return context;
-};
-ViewerRelated.prototype.setContextStyle = function(el, context){
-    // Set context style with the attributes of the element
-    var strokeEl = el.getAttributeNS(null, "stroke");
-    var fillEl = el.getAttributeNS(null, "fill");
-    var fillOpEl = el.getAttributeNS(null, "fill-opacity");
-    context.strokeStyle = strokeEl;
-    context.fillColor = fillEl;
-    context.globalAlpha = fillOpEl;
-    return context;
-};
-ViewerRelated.prototype.drawRectangle = function(context,
-                                                 xcoord, ycoord,
-                                                 width, height){
+ViewerRelated.prototype.drawRectangle = function(mouseX2, // destination x2
+                                                 mouseY2, // destination y2
+                                                 hratio,
+                                                 vratio,
+                                                 context,
+                                                 rectUpdate){
     // draw rectangle to context
+    // get rectangle width
+    var x1coord = rectUpdate["x1"];
+    var y1coord = rectUpdate["y1"];
+    var rectW = mouseX2 - x1coord;
+    var rectH = mouseY2 - y1coord;
+
+    // get real coordinate values
+    var x_real = x1coord / hratio;
+    var y_real = y1coord / vratio;
+
+    // get real coordinate of mouseX2 and mouseY2
+    var mouseX2Trans = mouseX2 / hratio;
+    var mouseY2Trans = mouseY2 / vratio;
+
+    // get real width
+    var width_real = Math.floor(mouseX2Trans - x_real);
+    var height_real = Math.floor(mouseY2Trans - y_real);
+
+    // Update rect object with the known values
+    //
+    rectUpdate["y2"] = mouseY2;
+    rectUpdate["x2"] = mouseX2;
+    //
+    rectUpdate["width"] = rectW;
+    rectUpdate["height"] = rectH;
+    //
+    rectUpdate["hratio"] = hratio;
+    rectUpdate["vratio"] = vratio;
+    //
+    rectUpdate["x1_real"] = Math.floor(x_real);
+    rectUpdate["y1_real"] = Math.floor(y_real);
+    //
+    rectUpdate["x2_real"] = mouseX2Trans,
+    rectUpdate["y2_real"] = mouseY2Trans;
+    //
+    rectUpdate["width_real"] = width_real;
+    rectUpdate["height_real"] = height_real;
+
+    // draw object
     context.beginPath();
-    context.rect(xcoord,
-                 ycoord,
-                 width,
-                 height);
+    context.rect(x1coord,
+                 y1coord,
+                 rectW,
+                 rectH);
     context.stroke();
     context.fill();
     context.closePath();
     return context;
 };
-ViewerRelated.prototype.drawRectsCanvas = function(canvas, // canvas to draw
-                                                   rects, // rect list
-                                                   context // drawing context
-                                                  ){
-    // Draw rects to canvas context
-    var oldalpha = context.globalAlpha;
-    for(var i=0; i < rects.length; i++){
-        var rectObj = rects[i];
-        var xcoord = rectObj.getAttributeNS(null, "x");
-        var ycoord = rectObj.getAttributeNS(null, "y");
-        var width = rectObj.getAttributeNS(null, "width");
-        var height = rectObj.getAttributeNS(null, "height");
-        context = this.setContextStyle(rectObj, context);
-        this.drawRectangle(context, xcoord,
-                           ycoord, width,
-                           height);
+ViewerRelated.prototype.drawPolygon = function(mouseX2,
+                                               mouseY2,
+                                               hratio,
+                                               vratio,
+                                               context,
+                                               polyUpdate,
+                                               closeCheck){
+    // Draw polygon on context
+
+    // get real coordinate of mouseX2 and mouseY2
+    var mouseX2Trans = mouseX2 / hratio;
+    var mouseY2Trans = mouseY2 / vratio;
+
+    // create point object
+    var point = {};
+    point["x"] = mouseX2;
+    point["y"] = mouseY2;
+    point["x_real"] = mouseX2Trans;
+    point["y_real"] = mouseY2Trans;
+
+    // add point to pointlist
+    var pointlist = polyUpdate["pointlist"];
+    pointlist.push(point);
+    polyUpdate["hratio"] = hratio;
+    polyUpdate["vratio"] = vratio;
+    polyUpdate["pointlist"] = pointlist;
+    context.beginPath();
+    for(var p=0; p+1 < pointlist.length; p++){
+        var pointA = pointlist[p];
+        var pointB = pointlist[p+1];
+        context.moveTo(pointA.x, pointA.y);
+        context.lineTo(pointB.x, pointB.y);
     }
-    context.globalAlpha = oldalpha;
+    console.log("closecheck polygon");
+    console.log(closeCheck);
+    if(closeCheck === true){
+        var firstPoint = pointlist[0];
+        context.lineTo(firstPoint.x, firstPoint.y);
+    }
+    context.closePath();
+    context.stroke();
+    context.fill();
     return context;
 };
-ViewerRelated.prototype.parsePoints = function(polygon){
-    // Parses a polygon points
-    // returns a point array [[x,y], [x2,y2], ...]
-    var pointString = polygon.getAttributeNS(null, "points");
-    var pointsArray = pointString.split(" ");
-    var points = [];
-    for(var i=0; i<pointsArray.length; i++){
-        var point = {};
-        var pointStr = pointsArray[i];
-        var pointSplit = pointStr.split(",");
-        point["x"] = pointSplit[0];
-        point["y"] = pointSplit[1];
-        points.push(point);
-    }
-    return points;
+ViewerRelated.prototype.redrawImage = function(imageId,
+                                               ratio,
+                                               context){
+    // Redraw an already loaded image to canvas
+    // get img tag with id
+    var imtag = document.getElementById(imageId);
+
+    // set the image width and height to
+    // scene, image tag, and rect element
+    var imwidth = imtag.naturalWidth;
+    var imheight = imtag.naturalHeight;
+
+    // get scaled width and height
+    var scaledWidth = ratio * imwidth;
+    var scaledHeight = ratio * imheight;
+
+    // draw the image to context
+    context.beginPath();
+    context.drawImage(imtag, // image
+                      0,0, // coordinate source
+                      imwidth, // source width
+                      imheight, // source height
+                      0,0, // coordinate destination
+                      scaledWidth, // destination width
+                      scaledHeight // destination height
+                     );
+    context.closePath();
+    return context;
 };
-ViewerRelated.prototype.drawPolygon = function(context, polygon){
-    // draw polygon to context
-    var points = this.parsePoints(polygon);
+ViewerRelated.prototype.resetScene = function(){
+    // redraw page image without the drawn objects
+    // get canvas and context
+    var scene = document.getElementById("scene");
+    var context = scene.getContext("2d");
+    this.clearScene();
+    this.drawnObjects = [];
+    this.heldObjects = [];
+    this.redrawImage(this.imageId,
+                     this.ratio, context);
+};
+ViewerRelated.prototype.redrawRectObj = function(context, rectObj){
+    // Draw rectangle object to context
+    var x1coord = rectObj["properties"]["interfaceCoordinates"]["x1"];
+    var y1coord = rectObj["properties"]["interfaceCoordinates"]["y1"];
+    var nwidth = rectObj["properties"]["interfaceCoordinates"]["width"];
+    var nheight = rectObj["properties"]["interfaceCoordinates"]["height"];
+    context.beginPath();
+    context.rect(x1coord,
+                 y1coord,
+                 nwidth,
+                 nheight);
+    context.stroke();
+    context.closePath();
+    return context;
+};
+ViewerRelated.prototype.redrawPolygonObj = function(context, polyObj){
+    // Redraw polygon object
+    var points = polyObj["properties"]["interfaceCoordinates"]["pointlist"];
     var firstPoint = points[0];
+    console.log(firstPoint);
     context.beginPath();
     context.moveTo(firstPoint.x, firstPoint.y);
-    for(var p=0; points.length; p++){
+    for(var p=0; p < points.length; p++){
         var point = points[p];
         context.lineTo(point.x, point.y);
     }
     context.lineTo(firstPoint.x, firstPoint.y);
     context.closePath();
-    context = this.setContextStyle(poly, context);
     context.stroke();
     context.fill();
     return context;
+};
+ViewerRelated.prototype.redrawAllDrawnObjects = function(){
+    // redraw all the objects in the drawnObjects stack
+    // get context and the scene
+    var scene = document.getElementById("scene");
+    var context = scene.getContext("2d");
+
+    // redraw image
+    context = this.redrawImage(this.imageId,
+                               this.ratio, context);
+    for(var i=0; i < this.drawnObjects.length; i++){
+        var dobj = this.drawnObjects[i];
+        if(dobj["properties"]["selectorType"] === "polygon"){
+            context = this.redrawPolygonObj(context, dobj);
+        }else if(dobj["properties"]["selectorType"] === "rectangle"){
+            context = this.redrawRectObj(context, dobj);
+        }
+    }
+    return;
+};
+ViewerRelated.prototype.setSelectionCoordinates = function(event){
+    // set selection coordinates based on the selector type
+    // get scene and its offset
+    console.log('in set selection');
+    var scene = document.getElementById("scene");
+    var parentOffsetX = scene.offsetLeft;
+    var parentOffsetY = scene.offsetTop;
+
+    // get coordinates of the event on the scene
+    var xcoord = parseInt(event.layerX - parentOffsetX, 10);
+    var ycoord = parseInt(event.layerY - parentOffsetY, 10);
+
+    // get natural coordinates corresponding in the image
+    var xreal = xcoord / this.hratio;
+    var yreal = ycoord / this.vratio;
+
+    //
+    var seltype = this.selectorOptions.type;
+    if(seltype === "polygon-selector"){
+        this.poly.pointlist.push({"x" : xcoord,
+                                  "x_real" : xreal,
+                                  "y_real" : yreal,
+                                  "y" : ycoord});
+        this.poly.hratio = this.hratio;
+        this.poly.vratio = this.vratio;
+        this.poly.imageId = this.imageId;
+    }else if(seltype === "rectangle-selector"){
+        this.rect["x1"] = xcoord;
+        this.rect["x1_real"] = xreal;
+        this.rect["y1"] = ycoord;
+        this.rect["y1_real"] = yreal;
+        this.rect.hratio = this.hratio;
+        this.rect.vratio = this.vratio;
+        this.rect.imageId = this.imageId;
+        // console.log(this.rect);
+    }
+};
+ViewerRelated.prototype.setContextOptions2Object = function(dobj,
+                                                            strokeColor,
+                                                            fillColor,
+                                                            fillOpacity){
+    // set context options to the object
+    dobj["stroke"] = strokeColor;
+    dobj["fillColor"] = fillColor;
+    dobj["fillOpacity"] = fillOpacity;
+    return dobj;
+};
+ViewerRelated.prototype.drawSelection = function(event){
+    // add selection coordinates based on selector type
+
+    // get scene and context for drawing
+    if(this.mousePressed === false){
+        return;
+    }
+    if(this.selectInProcess === false){
+        return;
+    }
+    // get context and the scene
+    var scene = document.getElementById("scene");
+    var context = scene.getContext("2d");
+
+    // get region type
+
+    // clear scene
+    this.clearScene();
+
+    // redraw the page image
+    context = this.redrawImage(this.imageId,
+                               this.ratio,
+                               context);
+
+    // get the offset for precise calculation of coordinates
+    var parentOffsetX = scene.offsetLeft;
+    var parentOffsetY = scene.offsetTop;
+
+    // compute the coordinates for the selection
+    var x2coord = parseInt(event.layerX - parentOffsetX, 10);
+    var y2coord = parseInt(event.layerY - parentOffsetY, 10);
+
+    // ratio
+    var hratio = this.hratio;
+    var vratio = this.vratio;
+
+    // set context style options
+    // set context stroke color
+    context.strokeStyle = this.selectorOptions.strokeColor;
+
+    // prepare rgba string for fill style. ex: rgba(255,0,0,0.4)
+    var rgbastr = "rgba(";
+    rgbastr = rgbastr.concat(this.selectorOptions.fillColor); // rgb value ex: 255,0,0
+    rgbastr = rgbastr.concat(",");
+    rgbastr = rgbastr.concat(this.selectorOptions.fillOpacity);
+    rgbastr = rgbastr.concat(")");
+    context.fillStyle = rgbastr;
+
+    // draw object based on the selector type
+    var seltype = this.selectorOptions.type;
+    if(seltype === "polygon-selector"){
+        // save context style options to drawn object
+        this.poly = this.setContextOptions2Object(this.poly,
+                                                  this.selectorOptions.strokeColor,
+                                                  this.selectorOptions.fillColor,
+                                                  this.selectorOptions.fillOpacity);
+        // draw the object
+        context = this.drawPolygon(x2coord, y2coord,
+                                   hratio, vratio,
+                                   context,
+                                   this.poly,
+                                   this.inMouseUp);
+        console.log("drawn poly");
+        console.log(this.poly);
+        this.drawnObject = this.poly;
+    }else if(seltype === "rectangle-selector"){
+        // save context style options to drawn object
+        this.rect = this.setContextOptions2Object(this.poly,
+                                                  this.selectorOptions.strokeColor,
+                                                  this.selectorOptions.fillColor,
+                                                  this.selectorOptions.fillOpacity);
+        // draw the object
+        context = this.drawRectangle(x2coord,
+                                     y2coord,
+                                     hratio,
+                                     vratio,
+                                     context,
+                                     this.rect);
+        // console.log(this.rect);
+        this.drawnObject = this.rect;
+        // console.log(this.drawnObject);
+    }
+    return;
+};
+ViewerRelated.prototype.convertObj2Geojson = function(drawnObj){
+    // convert the drawn object to its geojson equivalent
+    var geoobj = {};
+    geoobj["type"] = "Feature";
+    geoobj["properties"] = {};
+    geoobj["geometry"] = {};
+    geoobj["id"] = drawnObj["id"];
+    geoobj["properties"]["id"] = drawnObj["id"];
+    geoobj["properties"]["imageId"] = drawnObj["imageId"];
+    geoobj["properties"]["regionType"] = drawnObj["regionType"];
+    geoobj["properties"]["selectorType"] = drawnObj["type"];
+    geoobj["properties"]["displayRelated"] = {};
+    geoobj["properties"]["displayRelated"]["hratio"] = drawnObj["hratio"];
+    geoobj["properties"]["displayRelated"]["vratio"] = drawnObj["vratio"];
+    geoobj["properties"]["displayRelated"]["strokeColor"] = drawnObj["strokeColor"];
+    geoobj["properties"]["displayRelated"]["fillColor"] = drawnObj["fillColor"];
+    geoobj["properties"]["displayRelated"]["fillOpacity"] = drawnObj["fillOpacity"];
+    geoobj["properties"]["interfaceCoordinates"] = {};
+    if(drawnObj["type"] === "polygon"){
+        // geometries for polygon
+        var pointlist = drawnObj["pointlist"];
+        console.log(pointlist);
+        geoobj["properties"]["interfaceCoordinates"]["pointlist"] = pointlist;
+        geoobj["geometry"]["type"] = "Polygon";
+        var coords = [];
+        for(var p=0; p<pointlist.length; p++){
+            var point = pointlist[p];
+            var coord = [point["x_real"], point["y_real"]];
+            coords.push(coord);
+        }
+        // add the first point to the end
+        var fp = pointlist[0];
+        console.log(fp);
+        var newfp = [fp["x_real"],fp["y_real"]];
+        console.log(newfp);
+        coords.push(newfp);
+        geoobj["geometry"]["coordinates"] = coords;
+    }else if(drawnObj["type"] === "rectangle"){
+        // geometries for rectangle
+        var x1 = drawnObj["x1"];
+        var y1 = drawnObj["y1"];
+        var x1_real = drawnObj["x1_real"];
+        var y1_real = drawnObj["y1_real"];
+        var width = drawnObj["width"];
+        var width_real = drawnObj["width_real"];
+        var height = drawnObj["height"];
+        var height_real = drawnObj["height_real"];
+        var x2_real = x1_real + width_real;
+        var y2_real = y1_real + height_real;
+        var x2 = x1 + width;
+        var y2 = y1 + height;
+        geoobj["properties"]["interfaceCoordinates"]["x1"] = x1;
+        geoobj["properties"]["interfaceCoordinates"]["y1"] = y1;
+        geoobj["properties"]["interfaceCoordinates"]["x2"] = x2;
+        geoobj["properties"]["interfaceCoordinates"]["y2"] = y2;
+        //
+        geoobj["properties"]["interfaceCoordinates"]["y1_real"] = y1_real;
+        geoobj["properties"]["interfaceCoordinates"]["x1_real"] = x1_real;
+        geoobj["properties"]["interfaceCoordinates"]["y2_real"] = y2_real;
+        geoobj["properties"]["interfaceCoordinates"]["x2_real"] = x2_real;
+        //
+        geoobj["properties"]["interfaceCoordinates"]["width"] = width;
+        geoobj["properties"]["interfaceCoordinates"]["height"] = height;
+        geoobj["properties"]["interfaceCoordinates"]["width_real"] = width_real;
+        geoobj["properties"]["interfaceCoordinates"]["height_real"] = height_real;
+        //
+        geoobj["geometry"]["type"] = "MultiLineString";
+        var topside = [[x1_real, y1_real], [x2_real, y1_real]];
+        var bottomside = [[x1_real, y2_real], [x2_real, y2_real]];
+        var rightside = [[x2_real, y1_real], [x2_real, y2_real]];
+        var leftside = [[x1_real, y1_real], [x1_real, y2_real]];
+        geoobj["geometry"]["coordinates"] = [topside, rightside,
+                                             bottomside, leftside];
+    }
+    return geoobj;
+};
+ViewerRelated.prototype.addSingleDrawnObject = function(){
+    // add drawn object to drawn objects stack
+    // make a copy of drawn object
+    var objstr = JSON.stringify(this.drawnObject);
+    var objJson = JSON.parse(objstr);
+    console.log("object seri");
+    console.log(objJson);
+    var geoj = this.convertObj2Geojson(objJson);
+    this.drawnObjects.push(geoj);
 };
 //     var context = canvas.getContext('2d');
 //     // set canvas width and height
@@ -1435,13 +1741,23 @@ let ImageViewer = new ViewerRelated();
 
 // Interfacing with html
 
+// image-list Section
+function loadOriginalSize(event){
+    // change the value of the original size check
+    var selectval = document.getElementById("original-size-cbox");
+    ImageViewer.originalSize = selectval.checked;
+    return;
+}
+
 function loadImage2Viewer(event){
     // load image to viewer
     ImageViewer.imageLoad(event);
     return;
 }
 
-// Viewer Related
+// viewer Section
+
+// viewer-tools
 
 function resetScene(){
     // reset scene
@@ -1449,6 +1765,19 @@ function resetScene(){
     return;
 }
 
+function addSelection(event){
+    // add selection event
+    var selectval = ImageViewer.selectInProcess;
+    if(selectval === true){
+        //
+        ImageViewer.addSingleDrawnObject();
+    }
+    return;
+}
+
+// ------------- selector-set ---------------------
+
+// ------------- selector-types -------------------
 function setSelectorType(event){
     // set selector type to viewer
     var rbuttons = document.querySelector("input[name='selector-rbutton']:checked");
@@ -1456,18 +1785,36 @@ function setSelectorType(event){
     ImageViewer.selectorOptions.type = rbtnval;
     return;
 }
+// ------------- ends selector-types -------------------
 
+// ------------- selector-options -------------------
+function getRgbCode(className, listName){
+    // extract rgb code from selected option
+    var selectedValue = document.getElementById(listName).value;
+    var colorOptions = document.getElementsByClassName(className);
+    var rgbval;
+    for(var i=0; i<colorOptions.length; i++){
+        var colorOption = colorOptions[i];
+        var optionValue = colorOption.getAttribute("value");
+        if(optionValue === selectedValue){
+            rgbval = colorOption.getAttribute("data-rgb");
+        }
+    }
+    return rgbval;
+}
 function setSelectorStrokeColor(event){
     // set selector stroke color to viewer
-    var selectedValue = document.getElementById("selector-stroke-color-list").value;
-    ImageViewer.selectorOptions.stroke = selectedValue;
+    var rgbcode = getRgbCode("selector-stroke-color",
+                             "selector-stroke-color-list");
+    ImageViewer.selectorOptions.strokeColor = rgbcode;
     return;
 }
 
 function setSelectorFillColor(event){
     // set selector fill color to viewer
-    var selectedValue = document.getElementById("selector-fill-color-list").value;
-    ImageViewer.selectorOptions.fillColor = selectedValue;
+    var rgbcode = getRgbCode("selector-fill-color",
+                             "selector-fill-color-list");
+    ImageViewer.selectorOptions.fillColor = rgbcode;
     return;
 }
 
@@ -1478,9 +1825,34 @@ function setSelectorFillOpacity(event){
     return;
 }
 
+function setSelectionProcess(event){
+    // set selection process to viewe
+    var selectval = document.getElementById("selector-active-cbox");
+    ImageViewer.selectInProcess=selectval.checked;
+    return selectval;
+}
+function showAllSelections(){
+    // show all previously added selections
+    var selectval = document.getElementById("selector-showall-cbox");
+    ImageViewer.redrawAllDrawnObjects();
+}
+// ------------- ends selector-options -------------------
+
+// ------------- ends selector-set ---------------------
+
+// ends Viewer Options ------------------------------------------
+
+// Mouse Events -------------------------------------------------
 function setSceneMouseUp(event){
     // set scene values for the mouse up event
+    var selectval = ImageViewer.selectInProcess;
+    if(selectval === true){
+        ImageViewer.inMouseUp = true;
+        //
+        ImageViewer.drawSelection(event);
+    }
     ImageViewer.mousePressed = false;
+    ImageViewer.poly.pointlist = [];
     return;
 }
 
@@ -1488,34 +1860,34 @@ function setSceneMouseDown(event){
     // set scene values for the mouse up event
     var selectval = ImageViewer.selectInProcess;
     if(selectval === true){
-        ImageViewer.mousePressed = true;
+        // set boolean checks
+        ImageViewer.inMouseUp = false; // necessary for closing polygon
+        ImageViewer.mousePressed = true; // necessary for events with mouse press
+
+        // get the type of the region that is being selected
+        var rbuttons = document.querySelector("input[name='selected-region-rbutton']:checked");
+        var rbtnval;
+        if(rbuttons != null){
+            rbtnval = rbuttons.value;
+        }else{
+            alert("Please Select the Region Type before adding the selection");
+        }
+
+        // get the selector type that is going to be used for selection
         var selectorType = ImageViewer.selectorOptions.type;
         if(selectorType === ""){
             alert("Please select a selector type");
         }else if(selectorType === "rectangle-selector"){
-            ImageViewer.getRectId();
+            ImageViewer.setRectId();
         }else if(selectorType === "polygon-selector"){
-            ImageViewer.getPolygonId();
+            ImageViewer.setPolyId();
         }
+
+        // set event coordinates as the selection coordinates
         ImageViewer.setSelectionCoordinates(event);
     }
     // test code
     return;
-}
-function addRect(event){
-    // add rectangle to svg element
-    var scene = document.getElementById("scene");
-    var ns = scene.getAttribute("xmlns");
-    console.log(ns);
-    var rect = document.createElementNS(ns, "rect");
-    rect.setAttributeNS(null, "width", 200);
-    rect.setAttributeNS(null, "height", 200);
-    rect.setAttributeNS(null, "x", 50);
-    rect.setAttributeNS(null, "y", 100);
-    rect.setAttributeNS(null, "fill", "red");
-    rect.setAttributeNS(null, "stroke", "red");
-    scene.appendChild(rect);
-    console.log("foo");
 }
 
 function setSceneMouseMove(event){
@@ -1524,19 +1896,11 @@ function setSceneMouseMove(event){
     var selectval = ImageViewer.selectInProcess;
     if(selectval === true){
         //
-        ImageViewer.addSelectionCoordinates(event);
-        ImageViewer.drawRect();
+        ImageViewer.drawSelection(event);
     }
     return;
 }
-
-function setSelectionProcess(event){
-    // set selection process to viewe
-    var selectval = document.getElementById("selector-active-cbox");
-    ImageViewer.selectInProcess=selectval.checked;
-    return selectval;
-}
-
+// ends Mouse Events -------------------------------------------------
 
 // function imageLoad(){
 //     // Load image to canvas
