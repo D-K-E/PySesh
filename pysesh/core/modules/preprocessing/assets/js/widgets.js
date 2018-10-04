@@ -505,16 +505,6 @@ ViewerRelated.prototype.drawSelection = function(event){
     var seltype = this.selectorOptions.type;
     if(seltype === "polygon-selector"){
         // save context style options to drawn object
-        this.poly = {"pointlist" : [],
-                     "id" : "",
-                     "type" : "polygon",
-                     "regionType" : "",
-                     "hratio" : "",
-                     "vratio" : "",
-                     "fillColor" : "",
-                     "strokeColor" : "",
-                     "fillOpacity" : "",
-                     "imageId" : ""};
         if(this.debug === true){
             console.log("in polygon drawing process");
         }
@@ -544,23 +534,6 @@ ViewerRelated.prototype.drawSelection = function(event){
         }
     }else if(seltype === "rectangle-selector"){
         // save context style options to drawn object
-        this.rect = {"x1" : "",
-                    "type" : "rectangle",
-                    "regionType" : "",
-                    "y1" : "",
-                    "x1_real" : "",
-                    "y1_real" : "",
-                    "width" : "",
-                    "width_real" : "",
-                    "height" : "",
-                    "height_real" : "",
-                    "imageId" : "",
-                    "hratio" : "",
-                    "vratio" : "",
-                    "fillColor" : "",
-                    "strokeColor" : "",
-                    "fillOpacity" : "",
-                    "id" : ""};
         if(this.debug === true){
             console.log("in rect drawing process");
         }
@@ -749,15 +722,25 @@ ViewerRelated.prototype.convertObj2Geojson = function(drawnObj){
 ViewerRelated.prototype.addSingleDrawnObject = function(){
     // add drawn object to drawn objects stack
     // make a copy of drawn object
+    if(this.debug === true){
+        console.log("in add single drawn object");
+    }
     var objstr = JSON.stringify(this.drawnObject);
     var objJson = JSON.parse(objstr);
-    console.log("object");
-    console.log(objJson);
+    if(this.debug === true){
+        console.log("object before geojson conversion");
+        console.log(objJson);
+    }
     var geoj = this.convertObj2Geojson(objJson);
-    console.log("geoj");
-    console.log(geoj);
+    if(this.debug === true){
+        console.log("object after geojson conversion");
+        console.log(geoj);
+    }
     this.drawnObjects["features"].push(geoj);
-    console.log(this.drawnObjects);
+    if(this.debug === true){
+        console.log("drawn objects after recent addition");
+        console.log(this.drawnObjects);
+    }
     return geoj;
 };
 //     var context = canvas.getContext('2d');
