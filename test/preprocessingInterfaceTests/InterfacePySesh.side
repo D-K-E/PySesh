@@ -1,0 +1,21 @@
+{
+  "id": "0f86d6c4-c53f-4e7a-a763-a19185920ddd",
+  "version": "1.1",
+  "name": "PySeshInterface",
+  "url": "file:///media/kaan/Data7510/GitProjects/PySesh/pysesh/core/modules/preprocessing/interface.html",
+  "tests": [{
+    "id": "00f7b2db-0340-43f1-907a-fa3fc85cac23",
+    "name": "PolygonSelectionAdd",
+    "commands": []
+  }],
+  "suites": [{
+    "id": "434d9795-781f-44ca-8593-c0f25634747c",
+    "name": "Default Suite",
+    "persistSession": false,
+    "parallel": false,
+    "timeout": 300,
+    "tests": ["00f7b2db-0340-43f1-907a-fa3fc85cac23"]
+  }],
+  "urls": [],
+  "plugins": []
+}
