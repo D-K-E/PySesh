@@ -12,6 +12,7 @@ var ViewerRelated = function(){
     obj.mousePressed = false; // mouse is pressed or not
     obj.inMouseUp = false; // inside the mouse up event
     obj.outOfBounds = false;
+    obj.debug = false;
     obj.detections = {};
 
     // selector options
@@ -156,10 +157,10 @@ ViewerRelated.prototype.imageLoad = function(event){
 ViewerRelated.prototype.setRectId = function(){
     // Sets the id field for the current rectangle
     var rectlist = [];
-    for(var i=0; i<this.drawnObjects.length; i++){
+    for(var i=0; i<this.drawnObjects["features"].length; i++){
         //
-        var drawObj = this.drawnObjects[i];
-        if(drawObj.type === "rectangle"){
+        var drawObj = this.drawnObjects["features"][i];
+        if(drawObj["properties"]["selectorType"] === "rectangle"){
             rectlist.push(drawObj);
         }
     }
@@ -171,10 +172,10 @@ ViewerRelated.prototype.setRectId = function(){
 ViewerRelated.prototype.setPolyId = function(){
     // Sets the id field for the current rectangle
     var polylist = [];
-    for(var i=0; i<this.drawnObjects.length; i++){
+    for(var i=0; i<this.drawnObjects["features"].length; i++){
         //
-        var drawObj = this.drawnObjects[i];
-        if(drawObj.type === "polygon"){
+        var drawObj = this.drawnObjects["features"][i];
+        if(drawObj["properties"]["selectorType"] === "polygon"){
             polylist.push(drawObj);
         }
     }
@@ -272,8 +273,6 @@ ViewerRelated.prototype.drawPolygon = function(mouseX2,
         context.moveTo(pointA.x, pointA.y);
         context.lineTo(pointB.x, pointB.y);
     }
-    console.log("closecheck polygon");
-    console.log(closeCheck);
     if(closeCheck === true){
         var firstPoint = pointlist[0];
         context.lineTo(firstPoint.x, firstPoint.y);
@@ -342,7 +341,6 @@ ViewerRelated.prototype.redrawPolygonObj = function(context, polyObj){
     // Redraw polygon object
     var points = polyObj["properties"]["interfaceCoordinates"]["pointlist"];
     var firstPoint = points[0];
-    console.log(firstPoint);
     context.beginPath();
     context.moveTo(firstPoint.x, firstPoint.y);
     for(var p=0; p < points.length; p++){
@@ -377,7 +375,9 @@ ViewerRelated.prototype.redrawAllDrawnObjects = function(){
 ViewerRelated.prototype.setSelectionCoordinates = function(event){
     // set selection coordinates based on the selector type
     // get scene and its offset
-    console.log('in set selection');
+    if(this.debug === true){
+        console.log('in set selection');
+    }
     var scene = document.getElementById("scene");
     var parentOffsetX = scene.offsetLeft;
     var parentOffsetY = scene.offsetTop;
@@ -392,7 +392,14 @@ ViewerRelated.prototype.setSelectionCoordinates = function(event){
 
     //
     var seltype = this.selectorOptions.type;
+    if(this.debug === true){
+        console.log('in selector option');
+        console.log(seltype);
+    }
     if(seltype === "polygon-selector"){
+        if(this.debug === true){
+            console.log('in polygon selector branch');
+        }
         this.poly.pointlist.push({"x" : xcoord,
                                   "x_real" : xreal,
                                   "y_real" : yreal,
@@ -400,7 +407,14 @@ ViewerRelated.prototype.setSelectionCoordinates = function(event){
         this.poly.hratio = this.hratio;
         this.poly.vratio = this.vratio;
         this.poly.imageId = this.imageId;
+        if(this.debug === true){
+            console.log('mousedown polygon state');
+            console.log(this.poly);
+        }
     }else if(seltype === "rectangle-selector"){
+        if(this.debug === true){
+            console.log('in rect selector branch');
+        }
         this.rect["x1"] = xcoord;
         this.rect["x1_real"] = xreal;
         this.rect["y1"] = ycoord;
@@ -408,6 +422,10 @@ ViewerRelated.prototype.setSelectionCoordinates = function(event){
         this.rect.hratio = this.hratio;
         this.rect.vratio = this.vratio;
         this.rect.imageId = this.imageId;
+        if(this.debug === true){
+            console.log('mousedown rect state');
+            console.log(this.rect);
+        }
         // console.log(this.rect);
     }
 };
@@ -423,13 +441,21 @@ ViewerRelated.prototype.setContextOptions2Object = function(dobj,
 };
 ViewerRelated.prototype.drawSelection = function(event){
     // add selection coordinates based on selector type
-
+    if(this.debug === true){
+    console.log("in draw selection");
+    }
     // get scene and context for drawing
     if(this.mousePressed === false){
         return;
     }
+    if(this.debug === true){
+        console.log("mouse is pressed");
+    }
     if(this.selectInProcess === false){
         return;
+    }
+    if(this.debug === true){
+        console.log("selection in process");
     }
     // get context and the scene
     var scene = document.getElementById("scene");
@@ -439,12 +465,16 @@ ViewerRelated.prototype.drawSelection = function(event){
 
     // clear scene
     this.clearScene();
-
+    if(this.debug === true){
+        console.log("scene clear");
+    }
     // redraw the page image
     context = this.redrawImage(this.imageId,
                                this.ratio,
                                context);
-
+    if(this.debug === true){
+        console.log("image redrawn");
+    }
     // get the offset for precise calculation of coordinates
     var parentOffsetX = scene.offsetLeft;
     var parentOffsetY = scene.offsetTop;
@@ -468,30 +498,80 @@ ViewerRelated.prototype.drawSelection = function(event){
     rgbastr = rgbastr.concat(this.selectorOptions.fillOpacity);
     rgbastr = rgbastr.concat(")");
     context.fillStyle = rgbastr;
-
+    if(this.debug === true){
+        console.log("context set");
+    }
     // draw object based on the selector type
     var seltype = this.selectorOptions.type;
     if(seltype === "polygon-selector"){
         // save context style options to drawn object
+        this.poly = {"pointlist" : [],
+                     "id" : "",
+                     "type" : "polygon",
+                     "regionType" : "",
+                     "hratio" : "",
+                     "vratio" : "",
+                     "fillColor" : "",
+                     "strokeColor" : "",
+                     "fillOpacity" : "",
+                     "imageId" : ""};
+        if(this.debug === true){
+            console.log("in polygon drawing process");
+        }
         this.poly = this.setContextOptions2Object(this.poly,
                                                   this.selectorOptions.strokeColor,
                                                   this.selectorOptions.fillColor,
                                                   this.selectorOptions.fillOpacity);
+        if(this.debug === true){
+            console.log("in polygon context set");
+        }
         // draw the object
         context = this.drawPolygon(x2coord, y2coord,
                                    hratio, vratio,
                                    context,
                                    this.poly,
                                    this.inMouseUp);
-        console.log("drawn poly");
-        console.log(this.poly);
+
+        if(this.debug === true){
+            console.log("polygon drawn");
+            console.log("current poly state");
+            console.log(this.poly);
+        }
         this.drawnObject = this.poly;
+        if(this.debug === true){
+            console.log("current drawn object state");
+            console.log(this.drawnObject);
+        }
     }else if(seltype === "rectangle-selector"){
         // save context style options to drawn object
-        this.rect = this.setContextOptions2Object(this.poly,
+        this.rect = {"x1" : "",
+                    "type" : "rectangle",
+                    "regionType" : "",
+                    "y1" : "",
+                    "x1_real" : "",
+                    "y1_real" : "",
+                    "width" : "",
+                    "width_real" : "",
+                    "height" : "",
+                    "height_real" : "",
+                    "imageId" : "",
+                    "hratio" : "",
+                    "vratio" : "",
+                    "fillColor" : "",
+                    "strokeColor" : "",
+                    "fillOpacity" : "",
+                    "id" : ""};
+        if(this.debug === true){
+            console.log("in rect drawing process");
+        }
+        this.rect = this.setContextOptions2Object(this.rect,
                                                   this.selectorOptions.strokeColor,
                                                   this.selectorOptions.fillColor,
                                                   this.selectorOptions.fillOpacity);
+        if(this.debug === true){
+            console.log("in rect context set");
+            console.log(this.rect);
+        }
         // draw the object
         context = this.drawRectangle(x2coord,
                                      y2coord,
@@ -499,14 +579,101 @@ ViewerRelated.prototype.drawSelection = function(event){
                                      vratio,
                                      context,
                                      this.rect);
-        // console.log(this.rect);
+        if(this.debug === true){
+            console.log("rect drawn");
+            console.log("current rect state");
+            console.log(this.rect);
+        }
         this.drawnObject = this.rect;
-        // console.log(this.drawnObject);
+        if(this.debug === true){
+            console.log("current drawn object state");
+            console.log(this.drawnObject);
+        }
     }
     return;
 };
 ViewerRelated.prototype.convertObj2Geojson = function(drawnObj){
     // convert the drawn object to its geojson equivalent
+    /*
+      geojson feature collection
+
+      {
+      "type": "FeatureCollection",
+      "features": [
+      {
+      "type": "Feature",
+      "id": "id0",
+      "geometry": {
+      "type": "LineString",
+      "coordinates": [
+      [102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]
+      ]
+      },
+      "properties": {
+      "prop0": "value0",
+      "prop1": "value1"
+      }
+      },
+      {
+      "type": "Feature",
+      "id": "id1",
+      "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+      [
+      [100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]
+      ]
+      ]
+      },
+      "properties": {
+      "prop0": "value0",
+      "prop1": "value1"
+      }
+      }
+      ]
+      }
+
+      Geojson feature:
+      {
+      "type": "Feature",
+      "geometry": {
+      "type": "LineString",
+      "coordinates": [
+      [100.0, 0.0], [101.0, 1.0]
+      ]
+      },
+      "properties": {
+      "prop0": "value0",
+      "prop1": "value1"
+      }
+      }
+
+      geojson multiline string
+      {
+      "type": "MultiLineString",
+      "coordinates": [
+      [ [100.0, 0.0], [101.0, 1.0] ],
+      [ [102.0, 2.0], [103.0, 3.0] ]
+      ]
+      }
+
+      Geojson polygon
+      no holes
+      {
+      "type": "Polygon",
+      "coordinates": [
+      [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0] ]
+      ]
+      }
+      with holes
+      {
+      "type": "Polygon",
+      "coordinates": [
+      [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0] ],
+      [ [100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2] ]
+      ]
+      }
+    */
     var geoobj = {};
     geoobj["type"] = "Feature";
     geoobj["properties"] = {};
@@ -515,7 +682,6 @@ ViewerRelated.prototype.convertObj2Geojson = function(drawnObj){
     geoobj["properties"]["id"] = drawnObj["id"];
     geoobj["properties"]["imageId"] = drawnObj["imageId"];
     geoobj["properties"]["regionType"] = drawnObj["regionType"];
-    geoobj["properties"]["selectorType"] = drawnObj["type"];
     geoobj["properties"]["displayRelated"] = {};
     geoobj["properties"]["displayRelated"]["hratio"] = drawnObj["hratio"];
     geoobj["properties"]["displayRelated"]["vratio"] = drawnObj["vratio"];
@@ -526,7 +692,7 @@ ViewerRelated.prototype.convertObj2Geojson = function(drawnObj){
     if(drawnObj["type"] === "polygon"){
         // geometries for polygon
         var pointlist = drawnObj["pointlist"];
-        console.log(pointlist);
+        geoobj["properties"]["selectorType"] = drawnObj["type"];
         geoobj["properties"]["interfaceCoordinates"]["pointlist"] = pointlist;
         geoobj["geometry"]["type"] = "Polygon";
         var coords = [];
@@ -537,13 +703,12 @@ ViewerRelated.prototype.convertObj2Geojson = function(drawnObj){
         }
         // add the first point to the end
         var fp = pointlist[0];
-        console.log(fp);
         var newfp = [fp["x_real"],fp["y_real"]];
-        console.log(newfp);
         coords.push(newfp);
-        geoobj["geometry"]["coordinates"] = coords;
+        geoobj["geometry"]["coordinates"] = [coords];
     }else if(drawnObj["type"] === "rectangle"){
         // geometries for rectangle
+        geoobj["properties"]["selectorType"] = drawnObj["type"];
         var x1 = drawnObj["x1"];
         var y1 = drawnObj["y1"];
         var x1_real = drawnObj["x1_real"];
@@ -586,10 +751,14 @@ ViewerRelated.prototype.addSingleDrawnObject = function(){
     // make a copy of drawn object
     var objstr = JSON.stringify(this.drawnObject);
     var objJson = JSON.parse(objstr);
-    console.log("object seri");
+    console.log("object");
     console.log(objJson);
     var geoj = this.convertObj2Geojson(objJson);
-    this.drawnObjects.push(geoj);
+    console.log("geoj");
+    console.log(geoj);
+    this.drawnObjects["features"].push(geoj);
+    console.log(this.drawnObjects);
+    return geoj;
 };
 //     var context = canvas.getContext('2d');
 //     // set canvas width and height
@@ -1756,6 +1925,13 @@ function loadImage2Viewer(event){
 }
 
 // viewer Section
+function setDebug(event){
+    // set debug mode
+    var cbox = document.getElementById("debug-cbox");
+    ImageViewer.debug = cbox.checked;
+    console.log(ImageViewer);
+    return;
+}
 
 // viewer-tools
 
@@ -1826,7 +2002,7 @@ function setSelectorFillOpacity(event){
 }
 
 function setSelectionProcess(event){
-    // set selection process to viewe
+    // set selection process to viewer
     var selectval = document.getElementById("selector-active-cbox");
     ImageViewer.selectInProcess=selectval.checked;
     return selectval;
@@ -1852,7 +2028,6 @@ function setSceneMouseUp(event){
         ImageViewer.drawSelection(event);
     }
     ImageViewer.mousePressed = false;
-    ImageViewer.poly.pointlist = [];
     return;
 }
 
@@ -1878,8 +2053,37 @@ function setSceneMouseDown(event){
         if(selectorType === ""){
             alert("Please select a selector type");
         }else if(selectorType === "rectangle-selector"){
+            // reset the rectangle if the selector is a rectangle
+            ImageViewer.rect = {"x1" : "",
+                                "type" : "rectangle",
+                                "regionType" : "",
+                                "y1" : "",
+                                "x1_real" : "",
+                                "y1_real" : "",
+                                "width" : "",
+                                "width_real" : "",
+                                "height" : "",
+                                "height_real" : "",
+                                "imageId" : "",
+                                "hratio" : "",
+                                "vratio" : "",
+                                "fillColor" : "",
+                                "strokeColor" : "",
+                                "fillOpacity" : "",
+                                "id" : ""};
             ImageViewer.setRectId();
         }else if(selectorType === "polygon-selector"){
+            // reset the polygon if the selector is a polygon
+            ImageViewer.poly = {"pointlist" : [],
+                                "id" : "",
+                                "type" : "polygon",
+                                "regionType" : "",
+                                "hratio" : "",
+                                "vratio" : "",
+                                "fillColor" : "",
+                                "strokeColor" : "",
+                                "fillOpacity" : "",
+                                "imageId" : ""};
             ImageViewer.setPolyId();
         }
 
@@ -1892,7 +2096,7 @@ function setSceneMouseDown(event){
 
 function setSceneMouseMove(event){
     // set values related to mouse movement to scene
-    console.log("in scene mouse move");
+    // console.log("in scene mouse move");
     var selectval = ImageViewer.selectInProcess;
     if(selectval === true){
         //

@@ -58,6 +58,13 @@
                     <fieldset id="viewer-tools">
                         <legend>Viewer Tools</legend>
                         <label>
+                            Debug mode
+                            <input type="checkbox"
+                                   onchange="setDebug(event)"
+                                   id="debug-cbox"/>
+                        </label>
+
+                        <label>
                             Zoom
                             <button id="zoomPlusBtn"
                                     class="zoom-btn"
@@ -124,19 +131,50 @@
                                     Selector Stroke Color
                                     <select id="selector-stroke-color-list"
                                             onchange="setSelectorStrokeColor(event)">
-                                        <option value="red">Red</option>
-                                        <option value="green">Green</option>
-                                        <option value="blue">Blue</option>
+                                        <option value="red"
+                                                data-rgb="255,0,0"
+                                                class="selector-stroke-color">Red</option>
+                                        <option class="selector-stroke-color"
+                                                data-rgb="127,0,0"
+                                                value="yellow">Yellow</option>
+                                        <option class="selector-stroke-color"
+                                                data-rgb="0,255,0"
+                                                value="green">Green</option>
+                                        <option class="selector-stroke-color"
+                                                data-rgb="0,0,255"
+                                                value="blue">Blue</option>
                                     </select>
                                 </label>
                                 <label class="select-fill-color-lbl">
                                     Selector Fill Color
                                     <select id="selector-fill-color-list"
                                             onchange="setSelectorFillColor(event)">
-                                        <option value="none">None</option>
-                                        <option value="red">Red</option>
-                                        <option value="green">Green</option>
-                                        <option value="blue">Blue</option>
+                                        <option value="none"
+                                                data-rgb="0,0,0"
+                                                class="selector-fill-color">
+                                            None
+                                        </option>
+                                        <option value="red"
+                                                data-rgb="255,0,0"
+                                                class="selector-fill-color">
+                                            Red
+                                        </option>
+                                        <option class="selector-fill-color"
+                                                data-rgb="127,0,0"
+                                                value="yellow">
+                                            Yellow
+                                        </option>
+                                        <option class="selector-fill-color"
+                                                data-rgb="0,255,0"
+                                                value="green">
+                                            Green
+                                        </option>
+                                        <option class="selector-fill-color"
+                                                data-rgb="0,0,255"
+                                                value="blue">
+                                            Blue
+                                        </option>
+
                                     </select>
                                 </label>
                                 <label class="select-fill-opacity-lbl">

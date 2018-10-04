@@ -45,6 +45,12 @@
                     <fieldset id="viewer-tools">
                         <legend>Viewer Tools</legend>
                         <label>
+                            Debug mode
+                            <input type="checkbox"
+                                   onchange="setDebug(event)"
+                                   id="debug-cbox"/>
+                        </label>
+                        <label>
                             Zoom
                             <button id="zoomPlusBtn"
                                     class="zoom-btn"
