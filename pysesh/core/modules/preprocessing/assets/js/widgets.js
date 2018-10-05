@@ -282,6 +282,37 @@ ViewerRelated.prototype.drawPolygon = function(mouseX2,
     context.fill();
     return context;
 };
+ViewerRelated.prototype.drawPolygonFill = function(context,
+                                                   polyObj){
+    // Drawn polygon with color fill
+    var points = polyObj["pointlist"];
+    var fillColor = polyObj["fillColor"];
+    var strokeColor = polyObj["strokeColor"];
+    var fillOpacity = polyObj["fillOpacity"];
+
+    // set context style
+    var rgbastr = "rgba(";
+    rgbastr = rgbastr.concat(fillColor); // rgb value ex: 255,0,0
+    rgbastr = rgbastr.concat(",");
+    rgbastr = rgbastr.concat(fillOpacity);
+    rgbastr = rgbastr.concat(")");
+    context.fillStyle = rgbastr;
+    context.strokeStyle = strokeColor;
+
+    // draw polygon
+    var firstPoint = points[0];
+    context.beginPath();
+    context.moveTo(firstPoint.x, firstPoint.y);
+    for(var p=0; p < points.length; p++){
+        var point = points[p];
+        context.lineTo(point.x, point.y);
+    }
+    context.lineTo(firstPoint.x, firstPoint.y);
+    context.closePath();
+    context.stroke();
+    context.fill();
+    return context;
+};
 ViewerRelated.prototype.redrawImage = function(imageId,
                                                ratio,
                                                context){
@@ -328,18 +359,46 @@ ViewerRelated.prototype.redrawRectObj = function(context, rectObj){
     var y1coord = rectObj["properties"]["interfaceCoordinates"]["y1"];
     var nwidth = rectObj["properties"]["interfaceCoordinates"]["width"];
     var nheight = rectObj["properties"]["interfaceCoordinates"]["height"];
+
+    // Setting context style
+    var fillColor = rectObj["properties"]["displayRelated"]["fillColor"];
+    var fillOpacity = rectObj["properties"]["displayRelated"]["fillOpacity"];
+    var strokeColor = rectObj["properties"]["displayRelated"]["strokeColor"];
+    var rgbastr = "rgba(";
+    rgbastr = rgbastr.concat(fillColor); // rgb value ex: 255,0,0
+    rgbastr = rgbastr.concat(",");
+    rgbastr = rgbastr.concat(fillOpacity);
+    rgbastr = rgbastr.concat(")");
+    context.fillStyle = rgbastr;
+    context.strokeStyle = strokeColor;
+
     context.beginPath();
     context.rect(x1coord,
                  y1coord,
                  nwidth,
                  nheight);
     context.stroke();
+    context.fill();
     context.closePath();
     return context;
 };
 ViewerRelated.prototype.redrawPolygonObj = function(context, polyObj){
     // Redraw polygon object
     var points = polyObj["properties"]["interfaceCoordinates"]["pointlist"];
+
+    // Setting context style
+    var fillColor = polyObj["properties"]["displayRelated"]["fillColor"];
+    var fillOpacity = polyObj["properties"]["displayRelated"]["fillOpacity"];
+    var strokeColor = polyObj["properties"]["displayRelated"]["strokeColor"];
+    var rgbastr = "rgba(";
+    rgbastr = rgbastr.concat(fillColor); // rgb value ex: 255,0,0
+    rgbastr = rgbastr.concat(",");
+    rgbastr = rgbastr.concat(fillOpacity);
+    rgbastr = rgbastr.concat(")");
+    context.fillStyle = rgbastr;
+    context.strokeStyle = strokeColor;
+
+    // Drawing first point
     var firstPoint = points[0];
     context.beginPath();
     context.moveTo(firstPoint.x, firstPoint.y);
@@ -358,12 +417,21 @@ ViewerRelated.prototype.redrawAllDrawnObjects = function(){
     // get context and the scene
     var scene = document.getElementById("scene");
     var context = scene.getContext("2d");
-
+    if(this.debug === true){
+        console.log("in redraw all");
+    }
     // redraw image
     context = this.redrawImage(this.imageId,
                                this.ratio, context);
-    for(var i=0; i < this.drawnObjects.length; i++){
-        var dobj = this.drawnObjects[i];
+    if(this.debug === true){
+        console.log("in image redrawn");
+    }
+    for(var i=0; i < this.drawnObjects["features"].length; i++){
+        var dobj = this.drawnObjects["features"][i];
+        if(this.debug === true){
+            console.log("drawn object");
+            console.log(dobj);
+        }
         if(dobj["properties"]["selectorType"] === "polygon"){
             context = this.redrawPolygonObj(context, dobj);
         }else if(dobj["properties"]["selectorType"] === "rectangle"){
@@ -445,22 +513,21 @@ ViewerRelated.prototype.drawSelection = function(event){
     console.log("in draw selection");
     }
     // get scene and context for drawing
+    var scene = document.getElementById("scene");
+    var context = scene.getContext("2d");
+
     if(this.mousePressed === false){
-        return;
+        return context;
     }
     if(this.debug === true){
         console.log("mouse is pressed");
     }
     if(this.selectInProcess === false){
-        return;
+        return context;
     }
     if(this.debug === true){
         console.log("selection in process");
     }
-    // get context and the scene
-    var scene = document.getElementById("scene");
-    var context = scene.getContext("2d");
-
     // get region type
 
     // clear scene
@@ -563,7 +630,7 @@ ViewerRelated.prototype.drawSelection = function(event){
             console.log(this.drawnObject);
         }
     }
-    return;
+    return context;
 };
 ViewerRelated.prototype.convertObj2Geojson = function(drawnObj){
     // convert the drawn object to its geojson equivalent
@@ -1980,7 +2047,7 @@ function setSelectorFillColor(event){
 function setSelectorFillOpacity(event){
     // set selector fill opacity to viewer
     var selectedValue = document.getElementById("selector-fill-opacity-list").value;
-    ImageViewer.selectorOptions.fillOpacity = selectedValue;
+    ImageViewer.selectorOptions.fillOpacity = parseFloat(selectedValue, 10);
     return;
 }
 
@@ -1993,7 +2060,10 @@ function setSelectionProcess(event){
 function showAllSelections(){
     // show all previously added selections
     var selectval = document.getElementById("selector-showall-cbox");
-    ImageViewer.redrawAllDrawnObjects();
+    if(selectval.checked === true){
+        console.log("in showall");
+        ImageViewer.redrawAllDrawnObjects();
+    }
 }
 // ------------- ends selector-options -------------------
 
@@ -2008,7 +2078,13 @@ function setSceneMouseUp(event){
     if(selectval === true){
         ImageViewer.inMouseUp = true;
         //
-        ImageViewer.drawSelection(event);
+        if(ImageViewer.selectorOptions.type === "polygon-selector"){
+            var lastDrawingContext = ImageViewer.drawSelection(event);
+            ImageViewer.drawPolygonFill(lastDrawingContext,
+                                        ImageViewer.poly);
+        }else{
+            ImageViewer.drawSelection(event);
+        }
     }
     ImageViewer.mousePressed = false;
     return;
