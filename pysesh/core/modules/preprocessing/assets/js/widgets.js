@@ -117,6 +117,8 @@ ViewerRelated.prototype.imageLoad = function(event){
     // get canvas and context
     var scene = document.getElementById("scene");
     var context = scene.getContext("2d");
+
+    // set image according to parent div
     if(this.originalSize === false){
 
         // Set canvas width and height
