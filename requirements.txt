@@ -1,6 +1,5 @@
 numpy  # array/matrix manipulation
 scipy  # operate easily on image matrices
-cv2
 opencv-python
 matplotlib
 
