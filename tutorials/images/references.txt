@@ -1,2 +1,4 @@
 hieratik.png -> Möller G., Hieratischen Lesestücke für der Akademischen Gebrauchen, 1927 p.23, doc 12
+hieratikSatir.png -> Donker van Heel K., An Abnormal Hieratic Reading Book, fasc. 2,  Leiden, 2013 p. 8
+hiyeroglifSutun.png -> Petrie F., Illahun, Kahun and Gurob 1889-90, London, 1891, plate 28
 hiyeroglif.png -> Sethe K., Urkunden II, 10, 8.

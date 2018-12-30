@@ -407,8 +407,7 @@ class SeamMarker:
                                               isUpTo=isUpTo)
         m2index = self.getMarkCoordinates(maskImage2)
         im1mask = self.sliceImageWithMarks(imcp,
-                                           m1index, m2index,
-        )
+                                           m1index, m2index)
         if colSlice is False:
             plist = [point1, point2]
             im1mask = np.rot90(im1mask, 3, (0, 1))
